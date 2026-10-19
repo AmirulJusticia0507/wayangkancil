@@ -1,8 +1,8 @@
 // Wayang Kancil - Socket connection & UI handler (Phase 3 + Phase 6)
-import GameEngine from './js/gameEngine.js';
-import SoundManager from './js/sound.js';
-import { getAllEpisodes } from './js/episodes.js';
-import { NarrativeEngine } from './js/narrativeEngine.js';
+import GameEngine from './gameEngine.js';
+import SoundManager from './sound.js';
+import { getAllEpisodes } from './episodes.js';
+import { NarrativeEngine } from './narrativeEngine.js';
 
 // Vercel WebSocket connections must skip Socket.io's polling handshake so the
 // entire connection remains pinned to one function instance.
@@ -171,6 +171,7 @@ function renderVoteResults(votes) {
     .join(' | ');
   voteResults.textContent = 'Suara: ' + lines;
 }
+populateEpisodes();
 renderVoteOptions();
 
 episodeSelect.addEventListener('change', () => {
@@ -313,9 +314,17 @@ function getEpisode(episodeId) {
 }
 
 function buildNarrativeScenes(ep) {
+  const sceneMeta = {
+    episodeId: ep.id,
+    episodeTitle: ep.title,
+    episodeSubtitle: ep.subtitle,
+  };
+
   // Adegan pembuka cerita
   const scenes = [
     {
+      ...sceneMeta,
+      kind: 'opening',
       speaker: 'Dalang',
       text: `Cerita ${ep.title}: ${ep.subtitle}`,
       bgColor: ep.bgColor,
@@ -324,6 +333,8 @@ function buildNarrativeScenes(ep) {
       ],
     },
     {
+      ...sceneMeta,
+      kind: 'story',
       speaker: 'Narasi',
       text: ep.story,
       bgColor: ep.bgColor,
@@ -333,6 +344,8 @@ function buildNarrativeScenes(ep) {
       ],
     },
     {
+      ...sceneMeta,
+      kind: 'mission',
       speaker: 'Tujuan',
       text: ep.objective,
       bgColor: ep.bgColor,
@@ -409,11 +422,13 @@ function buildNarrativeScenes(ep) {
   };
 
   if (choiceScenes[ep.id]) {
-    scenes.push(choiceScenes[ep.id]);
+    scenes.push({ ...sceneMeta, kind: 'decision', bgColor: ep.bgColor, ...choiceScenes[ep.id] });
   }
 
   // Adegan penutup dengan piwulang
   scenes.push({
+    ...sceneMeta,
+    kind: 'moral',
     speaker: 'Piwulang',
     text: ep.moral,
     bgColor: ep.bgColor,
@@ -457,25 +472,6 @@ function showPiwulangScreen(ep, choices = []) {
   piwulangTitle.textContent = `Piwulang — ${ep.title}`;
   piwulangStory.textContent = ep.story;
   piwulangMoral.textContent = ep.moral;
-
-  // Hitung ending berdasarkan pilihan pemain
-  let clever = 0, force = 0, peace = 0;
-  for (const c of choices) {
-    const eff = (c.effect || '').toLowerCase();
-    if (eff.includes('cerdik') || eff.includes('clever') || eff.includes('bluff') || eff.includes('illusion') || eff.includes('mediate') || eff.includes('negotiate') || eff.includes('damai')) {
-      clever++;
-      peace++;
-    } else if (eff.includes('paksa') || eff.includes('force') || eff.includes('brave') || eff.includes('serang') || eff.includes('langsung')) {
-      force++;
-    } else if (eff.includes('damai') || eff.includes('peace') || eff.includes('berbicara') || eff.includes('negotiate')) {
-      peace++;
-    }
-  }
-
-  let endingKey = 'neutral';
-  if (clever > force && clever >= peace) endingKey = 'clever';
-  else if (force > clever && force >= peace) endingKey = 'force';
-  else if (peace > clever && peace > force) endingKey = 'peace';
 
   const endings = {
     clever: 'Kancil menang melalui kecerdikan dan trik. Hutan menghormati akal di atas kekerasan.',

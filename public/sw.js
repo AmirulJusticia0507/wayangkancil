@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v1';
+const CACHE_NAME = 'wayang-kancil-v2-scenes';
 const APP_SHELL = [
   '/',
   '/index.html',

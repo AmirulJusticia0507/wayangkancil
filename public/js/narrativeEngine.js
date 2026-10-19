@@ -1,5 +1,4 @@
-// Wayang Kancil - Narrative Scene Engine (Phase 6, Task 2)
-// Mengelola adegan cerita: dialog, pilihan, dan tampilan wayang siluet.
+// Wayang Kancil — cinematic narrative scene engine.
 
 export class NarrativeEngine {
   constructor(containerId) {
@@ -9,22 +8,12 @@ export class NarrativeEngine {
     this.onComplete = null;
     this.onChoice = null;
     this.isAnimating = false;
+    this.typewriterTimer = null;
   }
 
-  // Muat daftar adegan cerita
-  loadScenes(scenes) {
-    this.scenes = scenes;
-    this.sceneIndex = 0;
-  }
+  loadScenes(scenes) { this.scenes = scenes; this.sceneIndex = 0; }
+  start(startIndex = 0) { this.sceneIndex = startIndex; this.isAnimating = false; this.renderScene(this.sceneIndex); }
 
-  // Mulai menampilkan adegan dari index tertentu
-  start(startIndex = 0) {
-    this.sceneIndex = startIndex;
-    this.isAnimating = false;
-    this.renderScene(this.sceneIndex);
-  }
-
-  // Pindah ke adegan berikutnya
   next() {
     if (this.isAnimating) return;
     this.sceneIndex++;
@@ -35,20 +24,13 @@ export class NarrativeEngine {
     this.renderScene(this.sceneIndex);
   }
 
-  // Pemilihan pilihan (choice) oleh pemain
   choose(choiceIndex) {
     if (this.isAnimating) return;
     const scene = this.scenes[this.sceneIndex];
     const choice = scene.choices && scene.choices[choiceIndex];
     if (!choice) return;
-
     if (this.onChoice) this.onChoice(choice, scene);
-
-    if (choice.nextScene !== undefined) {
-      this.sceneIndex = choice.nextScene;
-    } else {
-      this.sceneIndex++;
-    }
+    this.sceneIndex = choice.nextScene !== undefined ? choice.nextScene : this.sceneIndex + 1;
     this.renderScene(this.sceneIndex);
   }
 
@@ -61,95 +43,85 @@ export class NarrativeEngine {
 
     const scene = this.scenes[index];
     this.isAnimating = true;
+    if (this.typewriterTimer) clearInterval(this.typewriterTimer);
 
-    // Bangun HTML adegan
-    let html = '';
+    const episodeId = scene.episodeId || 'ep-1';
+    const episodeNumber = episodeId.replace('ep-', '').padStart(2, '0');
+    const progress = Math.round(((index + 1) / this.scenes.length) * 100);
+    const sceneType = scene.kind || (scene.choices ? 'decision' : 'story');
+    const safeSpeaker = this.escapeHtml(scene.speaker || 'Dalang');
+    const safeTitle = this.escapeHtml(scene.episodeTitle || 'Wayang Kancil');
+    const safeSubtitle = this.escapeHtml(scene.episodeSubtitle || 'Lakon Nusantara');
 
-    // Latar adegan (warna berdasarkan episode)
-    if (scene.bgColor) {
-      html += `<div class="narrative-bg" style="background-color: ${scene.bgColor};"></div>`;
-    }
+    let html = `
+      <article class="narrative-stage theme-${episodeId} scene-${sceneType}" style="--scene-color:${scene.bgColor || '#2d1b10'}">
+        <div class="narrative-bg" aria-hidden="true"><div class="scene-glow"></div><div class="scene-landscape scene-landscape-back"></div><div class="scene-landscape scene-landscape-front"></div><div class="scene-motif"></div></div>
+        <header class="narrative-header">
+          <div class="narrative-brand"><span>WK</span><p><small>Wayang Kancil</small>${safeTitle}</p></div>
+          <div class="narrative-chapter"><span>LAKON ${episodeNumber}</span><small>${safeSubtitle}</small></div>
+        </header>
+        <div class="narrative-progress" aria-label="Scene ${index + 1} dari ${this.scenes.length}"><i style="width:${progress}%"></i></div>
+        <div class="scene-index"><span>${String(index + 1).padStart(2, '0')}</span><small>/ ${String(this.scenes.length).padStart(2, '0')}</small></div>
+    `;
 
-    // Tampilkan wayang siluet (jika ada)
     if (scene.puppets && scene.puppets.length > 0) {
       html += '<div class="narrative-puppets">';
-      for (const p of scene.puppets) {
-        html += `
-          <div class="narrative-puppet" style="left: ${p.x}%; top: ${p.y}%; transform: scaleX(${p.flip ? '-1' : '1'});">
-            <div class="puppet-silhouette"></div>
-            <div class="puppet-label">${p.label}</div>
-          </div>
-        `;
+      for (const [puppetIndex, puppet] of scene.puppets.entries()) {
+        html += `<div class="narrative-puppet ${puppet.flip ? 'is-flipped' : ''}" style="--puppet-x:${puppet.x}%; --puppet-delay:${puppetIndex * 120}ms"><div class="puppet-shadow"></div><div class="puppet-silhouette ${this.puppetClass(puppet.label)}"><i></i><b></b></div><div class="puppet-label"><span></span>${this.escapeHtml(puppet.label)}</div></div>`;
       }
       html += '</div>';
     }
 
-    // Dialog box
-    html += `
-      <div class="narrative-dialog">
-        <div class="narrative-speaker">${scene.speaker || ''}</div>
-        <div class="narrative-text" id="narrative-text">${scene.text || ''}</div>
-      </div>
-    `;
+    html += `<section class="narrative-content"><div class="narrative-kicker"><span>${safeSpeaker}</span><small>${sceneType === 'decision' ? 'Tentukan jalan cerita' : 'Kisah dari sang dalang'}</small></div><div class="narrative-dialog"><div class="quote-mark">“</div><div class="narrative-text" id="narrative-text" aria-live="polite"></div></div>`;
 
-    // Tombol pilihan (jika ada)
     if (scene.choices && scene.choices.length > 0) {
       html += '<div class="narrative-choices">';
-      for (const [i, c] of scene.choices.entries()) {
-        html += `<button class="narrative-choice" data-index="${i}">${c.text}</button>`;
+      for (const [choiceIndex, choice] of scene.choices.entries()) {
+        html += `<button class="narrative-choice" data-index="${choiceIndex}"><span>0${choiceIndex + 1}</span><strong>${this.escapeHtml(choice.text)}</strong><b>↗</b></button>`;
       }
       html += '</div>';
     } else {
-      // Tombol lanjut jika tidak ada pilihan
-      html += '<button class="narrative-next" id="narrative-next">Lanjut &gt;</button>';
+      html += '<button class="narrative-next" id="narrative-next"><span>Lanjutkan kisah</span><b>→</b></button>';
     }
 
+    html += '</section><div class="narrative-footnote"><span>MENANG TANPA NGASORAKE</span><small>Akal budi • Eling lan waspada</small></div></article>';
     this.container.innerHTML = html;
     this.container.classList.remove('hidden');
-
-    // Typewriter effect untuk teks dialog
     this.typewriteText(scene.text || '');
 
-    // Event listener tombol lanjut
-    const nextBtn = document.getElementById('narrative-next');
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        if (this.isAnimating) return;
-        this.next();
-      });
-    }
-
-    // Event listener tombol pilihan
-    const choiceBtns = this.container.querySelectorAll('.narrative-choice');
-    choiceBtns.forEach((btn, i) => {
-      btn.addEventListener('click', () => {
-        this.choose(i);
-      });
-    });
-
+    const nextButton = document.getElementById('narrative-next');
+    if (nextButton) nextButton.addEventListener('click', () => this.next());
+    this.container.querySelectorAll('.narrative-choice').forEach((button, choiceIndex) => button.addEventListener('click', () => this.choose(choiceIndex)));
     this.isAnimating = false;
   }
 
-  // Efek mengetik (typewriter) pada teks dialog
   typewriteText(text) {
-    const el = document.getElementById('narrative-text');
-    if (!el) return;
-    el.textContent = '';
-    let i = 0;
-    const interval = setInterval(() => {
-      el.textContent += text.charAt(i);
-      i++;
-      if (i >= text.length) clearInterval(interval);
-    }, 25);
+    const element = document.getElementById('narrative-text');
+    if (!element) return;
+    element.textContent = '';
+    let characterIndex = 0;
+    this.typewriterTimer = setInterval(() => {
+      element.textContent += text.charAt(characterIndex);
+      characterIndex++;
+      if (characterIndex >= text.length) { clearInterval(this.typewriterTimer); this.typewriterTimer = null; }
+    }, 12);
   }
 
-  // Sembunyikan engine narasi
-  hide() {
-    if (this.container) this.container.classList.add('hidden');
+  puppetClass(label = '') {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('kancil')) return 'puppet-kancil';
+    if (normalized.includes('buaya')) return 'puppet-buaya';
+    if (normalized.includes('macan') || normalized.includes('harimau')) return 'puppet-macan';
+    if (normalized.includes('siput')) return 'puppet-siput';
+    if (normalized.includes('serigala')) return 'puppet-serigala';
+    if (normalized.includes('gajah')) return 'puppet-gajah';
+    return 'puppet-generic';
   }
 
-  // Tampilkan engine narasi
-  show() {
-    if (this.container) this.container.classList.remove('hidden');
+  escapeHtml(value) {
+    return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
   }
+
+  hide() { if (this.container) this.container.classList.add('hidden'); }
+  show() { if (this.container) this.container.classList.remove('hidden'); }
 }
