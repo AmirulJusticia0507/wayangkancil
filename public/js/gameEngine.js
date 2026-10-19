@@ -11,6 +11,7 @@ export default class GameEngine {
     this.items = [];               // { x, y, type } (cucumber placeholders)
     this.effects = [];             // { type, x, y, ttl, maxTtl } (ability visual effects)
     this.roomId = null;
+    this.parallaxOffset = 0; // untuk gerakan latar parallax
 
     // Loop
     this.lastTime = 0;
@@ -72,9 +73,26 @@ export default class GameEngine {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // Blencong glow di pojok kanan atas (cahaya pelita)
-    const glowGrad = ctx.createRadialGradient(w * 0.85, h * 0.15, 0, w * 0.85, h * 0.15, 300);
-    glowGrad.addColorStop(0, 'rgba(255, 213, 79, 0.25)');
+    // Parallax layers — layar bayangan Kelir yang bergerak bertingkat
+    ctx.strokeStyle = 'rgba(255, 213, 79, 0.07)';
+    ctx.lineWidth = 2;
+    for (let layer = 1; layer <= 3; layer++) {
+      const offset = (this.parallaxOffset * layer * 0.25) % w;
+      ctx.beginPath();
+      ctx.moveTo(offset - w, 0);
+      ctx.lineTo(offset - w, h);
+      ctx.moveTo(offset, 0);
+      ctx.lineTo(offset, h);
+      ctx.moveTo(offset + w, 0);
+      ctx.lineTo(offset + w, h);
+      ctx.stroke();
+    }
+
+    // Blencong glow yang lebih dramatis dengan efek berkedip (lamp pulse)
+    const lampPulse = 0.85 + Math.sin(time * 0.003) * 0.15;
+    const glowGrad = ctx.createRadialGradient(w * 0.85, h * 0.15, 0, w * 0.85, h * 0.15, 400);
+    glowGrad.addColorStop(0, `rgba(255, 213, 79, ${0.4 * lampPulse})`);
+    glowGrad.addColorStop(0.2, `rgba(255, 213, 79, ${0.18 * lampPulse})`);
     glowGrad.addColorStop(1, 'rgba(255, 213, 79, 0)');
     ctx.fillStyle = glowGrad;
     ctx.fillRect(0, 0, w, h);
@@ -83,9 +101,16 @@ export default class GameEngine {
     const flicker = 0.85 + Math.sin(time * 0.005) * 0.08;
     ctx.fillStyle = `rgba(0, 0, 0, ${0.35 * flicker})`;
     ctx.fillRect(0, 0, w, h);
+
+    // Vignette bayangan di tepi (kedalaman wayang)
+    const vignette = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.3, w * 0.5, h * 0.5, w * 0.85);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
   }
 
-  drawWayangSilhouette(ctx, p) {
+  drawWayangSilhouette(ctx, p, now) {
     ctx.save();
     ctx.translate(p.x, p.y);
 
@@ -93,17 +118,48 @@ export default class GameEngine {
 
     const s = 34; // ukuran dasar wayang
 
+    // 3D tilt berdasarkan arah gerakan (kedalaman wayang)
+    const tiltY = p.direction === 'left' ? -8 : 8;
+    ctx.transform(1, 0, Math.tan(tiltY * Math.PI / 180) * 0.1, 1, 0, 0);
+
     // Shadow drop (efek Bayangan di balik wayang)
     ctx.shadowColor = 'rgba(0,0,0,0.9)';
-    ctx.shadowBlur = 14;
-    ctx.shadowOffsetX = 4;
-    ctx.shadowOffsetY = 6;
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 5;
 
-    // Kepala wayang (lonjong ke atas)
+    const t = Math.sin(now * 0.004); // animasi joint halus
+    const moving = p.actionState === 'moving';
+
+    // Kepala wayang (lonjong ke atas) dengan nod saat bergerak
+    ctx.save();
+    ctx.translate(0, -s * 0.55);
+    ctx.rotate(moving ? t * 0.1 : 0);
     ctx.fillStyle = '#141414';
     ctx.beginPath();
-    ctx.ellipse(0, -s * 0.55, s * 0.45, s * 0.7, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, s * 0.45, s * 0.7, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
+
+    // Lengan kiri (joint animation)
+    ctx.save();
+    ctx.translate(-s * 0.3, s * 0.2);
+    ctx.rotate(moving ? t * 0.5 : t * 0.1);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.15, s * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Lengan kanan (joint animation, berseberangan dengan kiri)
+    ctx.save();
+    ctx.translate(s * 0.3, s * 0.2);
+    ctx.rotate(moving ? -t * 0.5 : -t * 0.1);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.15, s * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     // Tubuh wayang (taper ke bawah)
     ctx.beginPath();
@@ -114,8 +170,8 @@ export default class GameEngine {
     ctx.closePath();
     ctx.fill();
 
-    // Tangan kanan (tergantung karakter / action)
-    if (p.actionState === 'moving') {
+    // Tangan kanan saat moving (efek sentuhan)
+    if (moving) {
       ctx.beginPath();
       ctx.arc(s * 0.45, s * 0.35, s * 0.18, 0, Math.PI * 2);
       ctx.fill();
@@ -234,6 +290,7 @@ export default class GameEngine {
   loop(now) {
     const dt = (now - this.lastTime) / 1000;
     this.lastTime = now;
+    this.parallaxOffset += dt * 25;
 
     const ctx = this.ctx;
     const w = this.canvas.width;
@@ -248,7 +305,7 @@ export default class GameEngine {
 
     for (const [id, p] of this.players.entries()) {
       this.interpolate(p, dt);
-      this.drawWayangSilhouette(ctx, p);
+      this.drawWayangSilhouette(ctx, p, now);
     }
 
     this.animId = requestAnimationFrame(this.loop);

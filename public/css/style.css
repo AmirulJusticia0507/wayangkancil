@@ -33,6 +33,130 @@ canvas {
   box-shadow: 0 0 60px rgba(255, 213, 79, 0.35);
 }
 
+/* ============================================================
+   Phase 6 Modernization — Wayang Kulit (kept aesthetic)
+   ============================================================ */
+
+/* 3D perspective container for wayang puppets (CSS 3D) */
+.puppet-3d {
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+.puppet-silhouette-3d {
+  width: 120px;
+  height: 160px;
+  background: #141414;
+  border-radius: 60% 60% 40% 40% / 60% 60% 40% 40%;
+  box-shadow: 0 0 40px rgba(0,0,0,0.9);
+  transform: rotateX(10deg) rotateY(5deg);
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease;
+}
+
+/* Puppet tilts slightly when moving (3D feel) */
+.puppet-silhouette-3d.moving {
+  transform: rotateX(12deg) rotateY(8deg) scale(1.02);
+}
+
+/* Joint animation — left arm sway */
+@keyframes joint-left-arm {
+  0%, 100% { transform: rotate(-15deg) translateX(-4px); }
+  50% { transform: rotate(15deg) translateX(4px); }
+}
+
+/* Joint animation — right arm sway */
+@keyframes joint-right-arm {
+  0%, 100% { transform: rotate(15deg) translateX(4px); }
+  50% { transform: rotate(-15deg) translateX(-4px); }
+}
+
+/* Joint animation — head nod */
+@keyframes joint-head {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-3deg) translateY(-2px); }
+}
+
+.joint-arm-left {
+  animation: joint-left-arm 1.2s infinite ease-in-out;
+  transform-origin: top left;
+}
+
+.joint-arm-right {
+  animation: joint-right-arm 1.2s infinite ease-in-out reverse;
+  transform-origin: top right;
+}
+
+.joint-head {
+  animation: joint-head 2s infinite ease-in-out;
+  transform-origin: top center;
+}
+
+/* Parallax background layers for Kelir */
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+  background-size: cover;
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.parallax-layer-1 { transform: translateX(0); z-index: 1; opacity: 0.25; }
+.parallax-layer-2 { transform: translateX(0); z-index: 2; opacity: 0.18; }
+.parallax-layer-3 { transform: translateX(0); z-index: 3; opacity: 0.12; }
+
+/* Enhanced Blencong glow (bloom) */
+.blencong-glow-modern {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 85% 15%,
+    rgba(255, 213, 79, 0.35) 0%,
+    rgba(255, 213, 79, 0.15) 25%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Lamp flicker light pulse */
+@keyframes lamp-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1.0; transform: scale(1.05); }
+}
+
+.lamp-pulse {
+  animation: lamp-pulse 3s infinite ease-in-out;
+}
+
+/* Lobby card 3D tilt effect */
+.lobby-card {
+  transform-style: preserve-3d;
+  transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Button 3D press effect */
+.btn-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-3d:active {
+  transform: translateY(2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Narrative scene depth */
+.narrative-puppet-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.narrative-puppet-3d:hover {
+  transform: rotateY(10deg) translateZ(30px);
+}
+
 /* Narrative Story Scene (Phase 6) */
 .narrative-bg {
   position: absolute;
