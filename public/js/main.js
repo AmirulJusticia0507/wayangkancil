@@ -1,7 +1,9 @@
 // Wayang Kancil - Socket connection & UI handler (Phase 3)
 import GameEngine from './js/gameEngine.js';
+import SoundManager from './js/sound.js';
 
 const socket = io();
+const sound = new SoundManager();
 
 // ---------- DOM ----------
 const lobby = document.getElementById('lobby');
@@ -112,6 +114,11 @@ socket.on('gameStarted', ({ roomId }) => {
   hudScore.textContent = '0';
   hudTimer.textContent = '0';
 
+  // Nyalakan audio (dengan interaksi pengguna) dan mainkan BGM Gamelan
+  sound.enable();
+  sound.playBgm();
+  sound.playSfx('start');
+
   initGameEngine(roomId);
 });
 
@@ -191,6 +198,7 @@ socket.on('itemCollected', ({ playerId, playerName, itemId, score }) => {
     score = score || 0;
     hudScore.textContent = score;
     showStatus(`${playerName} mengambil timun (+10)`, false);
+    sound.playSfx('collect');
   } else {
     // Tampilkan informasi pemain lain juga bisa, tapi HUD utama milik lokal
     console.log(`${playerName} collected item ${itemId}`);
@@ -203,6 +211,8 @@ socket.on('useAbility', (data) => {
 
 socket.on('gameOver', ({ winner, finalScores: scores }) => {
   if (engine) engine.stop();
+  sound.stop();
+  sound.playSfx('gameover');
   gameContainer.classList.add('hidden');
   gameOver.classList.remove('hidden');
 
@@ -252,6 +262,14 @@ copyRoomIdBtn.addEventListener('click', () => {
   roomIdInput.select();
   document.execCommand('copy');
   showStatus('Room ID disalin.', false);
+});
+
+audioBtn.addEventListener('click', () => {
+  sound.enable();
+  sound.playSfx('start');
+  audioBtn.textContent = sound.enabled ? '🔊 Audio ON' : '🔇 Audio gagal';
+  audioBtn.classList.add('opacity-50');
+  audioBtn.disabled = true;
 });
 
 startGameBtn.addEventListener('click', () => {
@@ -352,6 +370,11 @@ function triggerAbilityEffect(data) {
 
   const me = engine.players.get(myPlayerId);
   if (!me) return;
+
+  // SFX ability untuk pemain lokal
+  if (data.playerId === myPlayerId) {
+    sound.playSfx('ability');
+  }
 
   switch (data.abilityId) {
     case 'sprint': // Si Kancil: gerakan 2x lebih cepat selama 3 detik
