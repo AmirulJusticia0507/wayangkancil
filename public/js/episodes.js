@@ -56,6 +56,41 @@ kelelahan berlari kencang akhirnya menyerah, terkecoh oleh kerja sama para siput
     bgColor: '#3a4a2a', // tepi sungai hijau
     enemyType: 'siput',
   },
+
+  'ep-4': {
+    id: 'ep-4',
+    title: 'Kancil dan Kerbau',
+    subtitle: 'Menyelamatkan Kerbau dari Serigala',
+    story: `Seekor Kerbau menolong Serigala yang tertindih pohon. Namun setelah
+bebas, Serigala justru ingin memakan si Kerbau. Kancil datang sebagai hakim dan
+meminta mereka mencerahkan kejadian awal. Saat pohon kembali dijatuhkan
+menindih Serigala, Kancil mengajak Kerbau pergi dan membiarkan hewan licik itu
+kapok.`,
+    objective: 'Bantu Kerbau melarikan diri dari Serigala. Gunakan logika hakim untuk membalikkan situasi.',
+    ability: 'mediate',
+    abilityDesc: 'Panggil pertemuan hakim — semua musuh berhenti bergerak sesaat',
+    winCondition: 'Escort Kerbau ke tempat aman',
+    moral: '"Kebaikan tidak harus dibalas dengan kejahatan. Bijaklah dalam memilih siapa yang dipercaya."',
+    bgColor: '#2a2a1a', // hutan pohon runtuh
+    enemyType: 'serigala',
+  },
+
+  'ep-5': {
+    id: 'ep-5',
+    title: 'Kancil Hakim',
+    subtitle: 'Mengadili Harimau dan Gajah',
+    story: `Terjadi perselisihan wilayah atau sumber air antara hewan-hewan besar
+di hutan yang berisiko memicu perang. Kancil dipanggil sebagai mediator yang
+cerdik. Menggunakan logika halus dan strategi akal, Kancil berhasil
+menyelesaikan sengketa tanpa ada pertumpahan darah di hutan.`,
+    objective: 'Mengadili sengketa antara Harimau dan Gajah tanpa pertarungan. Pilih opsi perdamaian yang benar.',
+    ability: 'negotiate',
+    abilityDesc: 'Buka dialog perdamaian — musuh becomes neutral',
+    winCondition: 'Resolve conflict peacefully',
+    moral: '"Perdamaian melalui dialog lebih baik dari perang. Akal dapat menyelesaikan sengketa tanpa darah."',
+    bgColor: '#2d1b10', // dewan hutan
+    enemyType: null, // no enemy, negotiation only
+  },
 };
 
 export function getEpisode(episodeId) {
