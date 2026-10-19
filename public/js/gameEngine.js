@@ -17,6 +17,9 @@ export default class GameEngine {
     this.lastTime = 0;
     this.animId = null;
 
+    // Transisi scene (Phase 8.4)
+    this.transition = null; // { type: 'fade'|'wipe', progress: 0->1, direction: 'in'|'out', onComplete }
+
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
 
@@ -374,6 +377,59 @@ export default class GameEngine {
     });
   }
 
+  // ---------- Transisi scene (Phase 8.4) ----------
+  startTransition({ type = 'fade', direction = 'in', duration = 500, onComplete = null } = {}) {
+    this.transition = {
+      type,
+      direction,
+      duration,
+      progress: 0,
+      startTime: performance.now(),
+      onComplete,
+    };
+  }
+
+  updateTransition(now) {
+    if (!this.transition) return;
+    const elapsed = now - this.transition.startTime;
+    this.transition.progress = Math.min(elapsed / this.transition.duration, 1);
+
+    if (this.transition.progress >= 1) {
+      const cb = this.transition.onComplete;
+      this.transition = null;
+      if (cb) cb();
+    }
+  }
+
+  drawTransition(ctx, w, h) {
+    if (!this.transition) return;
+    const { type, direction, progress } = this.transition;
+    // progress 0 -> 1; for 'out' we invert visual
+    const t = direction === 'out' ? 1 - progress : progress;
+
+    ctx.save();
+    ctx.globalAlpha = t;
+
+    if (type === 'fade') {
+      ctx.fillStyle = '#0b0b09';
+      ctx.fillRect(0, 0, w, h);
+    } else if (type === 'wipe') {
+      // Wipe horizontal dari kiri ke kanan
+      const cut = w * t;
+      ctx.fillStyle = '#0b0b09';
+      ctx.fillRect(0, 0, cut, h);
+      // Cahaya blencong di tepi potong
+      const glow = ctx.createLinearGradient(cut - 40, 0, cut + 40, 0);
+      glow.addColorStop(0, 'rgba(255,213,79,0)');
+      glow.addColorStop(0.5, 'rgba(255,213,79,0.35)');
+      glow.addColorStop(1, 'rgba(255,213,79,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(Math.max(0, cut - 40), 0, 80, h);
+    }
+
+    ctx.restore();
+  }
+
   // ---------- Main loop ----------
   start() {
     if (this.animId) return;
@@ -408,6 +464,9 @@ export default class GameEngine {
       this.interpolate(p, dt);
       this.drawWayangSilhouette(ctx, p, now);
     }
+
+    this.updateTransition(now);
+    this.drawTransition(ctx, w, h);
 
     this.animId = requestAnimationFrame(this.loop);
   }

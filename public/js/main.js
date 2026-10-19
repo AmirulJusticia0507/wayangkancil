@@ -551,7 +551,8 @@ function showPiwulangScreen(ep, choices = []) {
 piwulangStartBtn.addEventListener('click', () => {
   piwulangScreen.classList.add('hidden');
   gameContainer.classList.remove('hidden');
-  initGameEngine(myRoom);
+  if (!engine) initGameEngine(myRoom);
+  else engine.startTransition({ type: 'fade', direction: 'out', duration: 700 });
 });
 
 function startGameAfterNarrative() {
@@ -800,6 +801,9 @@ function initGameEngine(roomId) {
   }, 1000 / 30);
 
   engine.start();
+
+  // Transisi fade-in saat game dimulai (Phase 8.4)
+  engine.startTransition({ type: 'fade', direction: 'out', duration: 700 });
 }
 
 function triggerAbilityEffect(data) {
