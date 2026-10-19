@@ -34,7 +34,7 @@ dan melilit Harimau.`,
     ability: 'illusion',
     abilityDesc: 'Spawn objek ilusi yang menarik perhatian musuh',
     winCondition: 'Survive until time runs out',
-    moral: '"Jangan simply percaya pada penampilan luar. Kecerdikan lebih ampuh dari kekuatan kasar."',
+    moral: '"Jangan sembarang percaya pada penampilan luar. Kecerdikan lebih ampuh dari kekuatan kasar."',
     bgColor: '#2d1b10', // hutan gelap
     enemyType: 'macan',
   },
@@ -63,7 +63,7 @@ kelelahan berlari kencang akhirnya menyerah, terkecoh oleh kerja sama para siput
     subtitle: 'Menyelamatkan Kerbau dari Serigala',
     story: `Seekor Kerbau menolong Serigala yang tertindih pohon. Namun setelah
 bebas, Serigala justru ingin memakan si Kerbau. Kancil datang sebagai hakim dan
-meminta mereka mencerahkan kejadian awal. Saat pohon kembali dijatuhkan
+meminta mereka menceritakan kejadian awal. Saat pohon kembali dijatuhkan
 menindih Serigala, Kancil mengajak Kerbau pergi dan membiarkan hewan licik itu
 kapok.`,
     objective: 'Bantu Kerbau melarikan diri dari Serigala. Gunakan logika hakim untuk membalikkan situasi.',
@@ -122,7 +122,7 @@ memukulkan. Kancil kemudian membagikan madu sebenarnya kepada hewan lain.`,
     objective: 'Bantu hewan lain mendapatkan madu sambil menipu Beruang.',
     ability: 'trickery',
     abilityDesc: 'Spawn ilusi madu yang menarik perhatian Beruang',
-    winCondition: 'Beruang terlibur dan madu terbagi',
+    winCondition: 'Beruang terperangkap dan madu terbagi',
     moral: '"Jangan biarkan keserakahan dan kecanduan membuatmu lupa akan bahaya di sekitar."',
     bgColor: '#3a4a2a', // hutan tropis siang hari
     enemyType: 'beruang',

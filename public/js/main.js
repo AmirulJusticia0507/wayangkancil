@@ -842,7 +842,7 @@ function buildNarrativeScenes(ep) {
   const choiceScenes = {
     'ep-1': {
       speaker: 'Dalang',
-      text: 'Kancil sudah di tepi seberang. Bagaimana caranya melampi para buaya?',
+      text: 'Kancil sudah di tepi seberang. Bagaimana caranya melewati para buaya?',
       puppets: [
         { label: 'Si Kancil', x: 30, y: 60, flip: false },
         { label: 'Buaya', x: 70, y: 60, flip: true },
@@ -971,7 +971,7 @@ function showPiwulangScreen(ep, choices = []) {
 
   const endings = {
     clever: 'Kancil menang melalui kecerdikan dan trik. Hutan menghormati akal di atas kekerasan.',
-    force: 'Kancil berhasil melalui keberanian dan confrontasi langsung. Namun hutan tetap penamakan ancaman.',
+    force: 'Kancil berhasil melalui keberanian dan confrontasi langsung. Namun hutan masih penuh ancaman.',
     peace: 'Kancil menyelesaikan konflik melalui dialog dan perdamaian. Harmoni hutan terjaga.',
     sad: 'Kancil gagal bertahan. Akal yang diabaikan dan keberanian sembarangan hanya membawa hancuran. Hutan meratap kehilangan sang pendamping cerdik.',
     neutral: 'Kancil menemukan jalan tengah antara akal dan keberanian.',
@@ -995,14 +995,14 @@ function showPiwulangScreen(ep, choices = []) {
     'ep-3': {
       clever: 'Kancil kalah dari Siput. Kerja sama tim mengalahkan kecepatan individual.',
       force: 'Kancil berlari kencang tapi kelelahan. Siput tetap ada di finish.',
-      peace: 'Kancil dan Siput berdamai. Lomba berakhir tanpa pemenang atau pemenang.',
+      peace: 'Kancil dan Siput berdamai. Lomba berakhir seri.',
       sad: 'Kancil tersesat di tengah hutan setelah mengabaikan strategi Siput.',
       neutral: 'Kancil hampir mencapai finish tapi Siput sudah di sana.',
     },
     'ep-4': {
       clever: 'Kancil menjadi hakim dan membalikkan situasi. Kerbau selamat.',
       force: 'Kancil berusaha paksa tapi Serigala masih mengancam.',
-      peace: 'Kerbau dan Serigala berdamai thanks to Kancil mediation.',
+      peace: 'Kerbau dan Serigala berdamai berkat mediasi Kancil.',
       sad: 'Serigala memakan Kerbau. Kancil gagal sebagai hakim dan pergi dari hutan.',
       neutral: 'Kerbau selamat tapi Serigala tetap di hutan.',
     },
