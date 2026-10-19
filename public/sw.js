@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v7-ai-proxy';
+const CACHE_NAME = 'wayang-kancil-v8-ai-dialogue';
 const APP_SHELL = [
   '/',
   '/index.html',

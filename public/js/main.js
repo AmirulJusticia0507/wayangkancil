@@ -5,7 +5,7 @@ import SoundManager from './sound.js';
 import { getAllEpisodes } from './episodes.js';
 import { NarrativeEngine } from './narrativeEngine.js';
 import WorldEngine from './worldEngine.js';
-import { AI_CONFIG, checkAiAvailable } from './aiConfig.js';
+import { AI_CONFIG, checkAiAvailable, aiNpcDialogue } from './aiConfig.js';
 
 // Vercel WebSocket connections must skip Socket.io's polling handshake so the
 // entire connection remains pinned to one function instance.
@@ -382,6 +382,23 @@ function startOpenWorld() {
   };
 
   // Callback ketika challenge disetujui (modal approve)
+  // Callback ketika bicara dengan NPC — gunakan AI untuk dialogue dinamis
+  worldEngine.onNpcDialogue = async (npc) => {
+    try {
+      const context = `Pemain sedang menjelajahi desa Wayang. NPC ${npc.name} berada di area ${npc.id}.`;
+      const response = await aiNpcDialogue(npc.name, context, 'Halo, apa kabar?');
+      if (worldEngine && worldEngine.dialogueBox) {
+        worldEngine.dialogueBox.text = response;
+        worldEngine.dialogueBox.loading = false;
+      }
+    } catch (e) {
+      if (worldEngine && worldEngine.dialogueBox) {
+        worldEngine.dialogueBox.text = npc.dialogue + ' (AI tidak tersedia)';
+        worldEngine.dialogueBox.loading = false;
+      }
+    }
+  };
+
   worldEngine.onChallengeApprove = (challenge) => {
     // Pause world engine
     if (worldEngine) worldEngine.stop();

@@ -326,7 +326,13 @@ export default class WorldEngine {
       return;
     }
     if (this.nearbyNpc) {
-      this.dialogueBox = { npc: this.nearbyNpc, text: this.nearbyNpc.dialogue };
+      // Jika ada callback AI dialogue, gunakan; jika tidak, pakai dialogue statis
+      if (this.onNpcDialogue) {
+        this.dialogueBox = { npc: this.nearbyNpc, text: '...' , loading: true };
+        this.onNpcDialogue(this.nearbyNpc);
+      } else {
+        this.dialogueBox = { npc: this.nearbyNpc, text: this.nearbyNpc.dialogue };
+      }
       return;
     }
     // Cek challenge zone terdekat
@@ -788,11 +794,18 @@ export default class WorldEngine {
     ctx.fillText(this.dialogueBox.npc.name || 'NPC', 40, boxY + 25);
     ctx.fillStyle = '#e5e7eb';
     ctx.font = '13px monospace';
-    const lines = this.wrapText(ctx, this.dialogueBox.text, w - 80);
-    let yy = boxY + 50;
-    for (const line of lines) {
-      ctx.fillText(line, 40, yy);
-      yy += 20;
+    if (this.dialogueBox.loading) {
+      ctx.fillText('...', 40, boxY + 50);
+      // Animasi loading dots
+      const dots = '.'.repeat(Math.floor(Date.now() / 300) % 4);
+      ctx.fillText('Memuat' + dots, 40, boxY + 70);
+    } else {
+      const lines = this.wrapText(ctx, this.dialogueBox.text, w - 80);
+      let yy = boxY + 50;
+      for (const line of lines) {
+        ctx.fillText(line, 40, yy);
+        yy += 20;
+      }
     }
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px monospace';
