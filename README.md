@@ -94,6 +94,27 @@ npm install
 node server.js
 ```
 
+## 🌱 Prinsip Desain Budaya Jawa
+
+Karakter Kancil dalam game ini tidak hanya sebagai simbol kecerdikan, tetapi cerminan strategi bertahan hidup dan filosofi kepemimpinan Jawa:
+
+### A. Ngawur Tanpa Aji — Akal Mengalahkan Kekuatan
+Kancil mewakili *wong cilik* yang menang melalui *akal budi*, *eling lan waspada*, dan kelincahan berpikir, bukan kekuatan fisik. Ability Kancil berfokus pada strategi, ilusi, dan bertahan (sprint, bluff, teleport), bukan serang langsung.
+
+### B. Kepemimpinan Jawa — Menang tanpa Ngasorake
+Kancil sebagai mediator konflik (misal: Harimau vs Kerbau) mencerminkan pemimpin yang cerdik menyelesaikan masalah tanpa pertumpahan darah. Episode negosiasi menawarkan opsi perdamaian sebagai ending terbaik.
+
+### C. Dualisme Watak — Kancil Cerdik vs Culas
+Kecerdikan Kancil dihormati jika digunakan untuk bertahan dan membela lemah, tetapi dikritik jika digunakan untuk merugikan (misal: mencuri timun). Multiple endings mencerminkan konsekuensi setiap pilihan.
+
+### D. Pesan Moral (*Piwulang*)
+| Nilai | Implementasi dalam Cerita |
+| :--- | :--- |
+| **Oja Dumeh** (Jangan sombong) | Kancil kalah dari Siput karena meremehkan lawan |
+| **Gotong Royong** | Kerja kolektif siput mengalahkan kecepatan individual |
+| **Ngundhuh Wohing Pakarti** | Tindakan licik yang merugikan akan membawa konsekuensi |
+| **Akal Unjuk Diri** | Kancil memanfaatkan situasi untuk keluar dari ancaman |
+
 ## 📄 License
 
 This project is inspired by the Indonesian Wayang Kancil shadow puppet fable tradition.
