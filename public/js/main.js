@@ -38,7 +38,7 @@ const createRoomBtn = document.getElementById('createRoomBtn');
 const joinRoomBtn = document.getElementById('joinRoomBtn');
 const copyRoomIdBtn = document.getElementById('copyRoomIdBtn');
 const startGameBtn = document.getElementById('startGameBtn');
-const soloStoryBtn = document.getElementById('soloStoryBtn');
+const storyModeBtn = document.getElementById('storyModeBtn');
 const playersList = document.getElementById('playersList');
 
 const hudRoom = document.getElementById('hudRoom');
@@ -274,8 +274,8 @@ function playNextSoloEpisode() {
   if (ep) showStatus(`Memulai cerita: ${ep.title} (${soloStoryIndex}/${soloStoryQueue.length})`, false);
 }
 
-if (soloStoryBtn) {
-  soloStoryBtn.addEventListener('click', () => startSoloStory(episodeSelect.value || null));
+if (storyModeBtn) {
+  storyModeBtn.addEventListener('click', () => startSoloStory(episodeSelect.value || null));
 }
 
 // Tampilkan status hati di lobby (disetelah elemen DOM siap)
@@ -1157,39 +1157,45 @@ function enterWaitingRoom(roomState) {
   startGameBtn.disabled = !isHost;
 }
 
-createRoomBtn.addEventListener('click', () => {
-  const playerName = playerNameInput.value.trim();
-  const character = characterSelect.value;
-  const episodeId = episodeSelect.value || null;
-  if (!playerName) {
-    showStatus('Nama pemain wajib diisi.');
-    return;
-  }
-  myCharacter = character;
-  myEpisode = episodeId;
-  socket.emit('createRoom', { playerName, character, episodeId });
-});
+if (createRoomBtn) {
+  createRoomBtn.addEventListener('click', () => {
+    const playerName = playerNameInput.value.trim();
+    const character = characterSelect.value;
+    const episodeId = episodeSelect.value || null;
+    if (!playerName) {
+      showStatus('Nama pemain wajib diisi.');
+      return;
+    }
+    myCharacter = character;
+    myEpisode = episodeId;
+    socket.emit('createRoom', { playerName, character, episodeId });
+  });
+}
 
-joinRoomBtn.addEventListener('click', () => {
-  const playerName = playerNameInput.value.trim();
-  const character = characterSelect.value;
-  const episodeId = episodeSelect.value || null;
-  const roomId = roomIdInput.value.trim().toUpperCase();
-  if (!playerName || !roomId) {
-    showStatus('Nama dan Room ID wajib diisi.');
-    return;
-  }
-  myCharacter = character;
-  myEpisode = episodeId;
-  socket.emit('joinRoom', { roomId, playerName, character, episodeId });
-});
+if (joinRoomBtn) {
+  joinRoomBtn.addEventListener('click', () => {
+    const playerName = playerNameInput.value.trim();
+    const character = characterSelect.value;
+    const episodeId = episodeSelect.value || null;
+    const roomId = roomIdInput.value.trim().toUpperCase();
+    if (!playerName || !roomId) {
+      showStatus('Nama dan Room ID wajib diisi.');
+      return;
+    }
+    myCharacter = character;
+    myEpisode = episodeId;
+    socket.emit('joinRoom', { roomId, playerName, character, episodeId });
+  });
+}
 
-copyRoomIdBtn.addEventListener('click', () => {
-  if (!roomIdInput.value) return;
-  roomIdInput.select();
-  document.execCommand('copy');
-  showStatus('Room ID disalin.', false);
-});
+if (copyRoomIdBtn) {
+  copyRoomIdBtn.addEventListener('click', () => {
+    if (!roomIdInput.value) return;
+    roomIdInput.select();
+    document.execCommand('copy');
+    showStatus('Room ID disalin.', false);
+  });
+}
 
 audioBtn.addEventListener('click', () => {
   sound.enable();
