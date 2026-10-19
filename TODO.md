@@ -36,13 +36,13 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Implement multiplayer story voting (Dalang mode).
 
 ## Phase 8: v3 — Roadmap Lanjutan
-- [ ] PWA offline/installable & performan canvas.
-- [ ] Leaderboard skor multiplayer real-time.
-- [ ] Karakter & lakon wayang tambahan.
-- [ ] Animasi wayang kulit & transisi scene.
-- [ ] Sistem hati / hubungan NPC dengan karakter wayang (Kancil, Pak Tani, Macan, Buaya).
-- [ ] Kebun / peternakan sederhana di antar lakon cerita.
-- [ ] Sistem musim yang memengaruhi ketersediaan item di map.
+- [x] [DONE] PWA offline/installable & performan canvas.
+- [x] [DONE] Leaderboard skor multiplayer real-time.
+- [x] [DONE] Karakter & lakon wayang tambahan.
+- [x] [DONE] Animasi wayang kulit & transisi scene.
+- [x] [DONE] Sistem hati / hubungan NPC dengan karakter wayang (Kancil, Pak Tani, Macan, Buaya).
+- [x] [DONE] Kebun / peternakan sederhana di antar lakon cerita.
+- [x] [DONE] Sistem musim yang memengaruhi ketersediaan item di map.
 
 ## Aturan Wajib
 Setiap checklist di atas yang sudah selesai dikerjakan:
