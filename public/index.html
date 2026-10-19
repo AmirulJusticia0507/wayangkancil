@@ -65,7 +65,7 @@
 
         <!-- Story Mode (full story, episode 1 sampai terakhir) -->
         <!-- Mode Utama: Open World + Story Mode (gabungan) -->
-        <button id="startGameBtn2" class="w-full btn-primary-cinematic" onclick="if(window.startOpenWorld)window.startOpenWorld()">
+        <button id="startGameBtn2" class="w-full btn-primary-cinematic">
           🎮 Mulai Permainan
         </button>
 
@@ -194,5 +194,24 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/pwa-register.js" defer></script>
   <script type="module" src="/js/main.js?v=5"></script>
+  <script>
+    // Fallback: handle Story Mode button click
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('startGameBtn2');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          // Wait for module to load
+          var check = setInterval(function() {
+            if (window.startOpenWorld) {
+              clearInterval(check);
+              window.startOpenWorld();
+            }
+          }, 100);
+          // Timeout after 5 seconds
+          setTimeout(function() { clearInterval(check); }, 5000);
+        });
+      }
+    });
+  </script>
 </body>
 </html>

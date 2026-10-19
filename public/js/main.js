@@ -1,4 +1,5 @@
 // Wayang Kancil - Socket connection & UI handler (Phase 3 + Phase 6)
+window.addEventListener('error', (e) => { window.__globalError = e.message; });
 import GameEngine from './gameEngine.js';
 import SoundManager from './sound.js';
 import { getAllEpisodes } from './episodes.js';
@@ -296,6 +297,7 @@ if (btn) {
 
 // ---------- Open World Mode (Harvest Moon style) ----------
 function startOpenWorld() {
+  window.__startOpenWorldCalled = true;
   const playerName = playerNameInput.value.trim() || 'Pemain';
   playerNameInput.value = playerName;
 
@@ -328,9 +330,15 @@ function startOpenWorld() {
   canvas.style.cursor = 'grab';
   try {
     worldEngine = new WorldEngine(canvas, canvas.getContext('2d'));
+    console.log('WorldEngine created');
     worldEngine.createDefaultMap();
+    console.log('Map created');
+    window.__worldEngine = worldEngine;
+    console.log('worldEngine assigned to window');
   } catch (e) {
     console.error('Error initializing world engine:', e);
+    window.__worldEngineError = e.message;
+    window.__worldEngineStack = e.stack;
   }
 
   // Callback ketika bicara dengan NPC yang punya cerita
@@ -443,11 +451,11 @@ function stopOpenWorld() {
   lobby.classList.remove('hidden');
 }
 
-// Expose startOpenWorld to window for inline onclick fallback
-window.startOpenWorld = startOpenWorld;
-
+// Set onclick directly (more reliable than addEventListener for module scope)
 if (startGameBtn2) {
-  startGameBtn2.addEventListener('click', startOpenWorld);
+  startGameBtn2.onclick = function() {
+    startOpenWorld();
+  };
 }
 
 // Tampilkan status hati di lobby (disetelah elemen DOM siap)
