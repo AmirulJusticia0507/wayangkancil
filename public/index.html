@@ -27,23 +27,23 @@
     <div class="lobby-bg"></div>
     <div class="lobby-blencong"></div>
 
-    <div class="relative z-10 w-full max-w-5xl px-6 flex flex-col items-center justify-center h-full">
-      <h1 class="lobby-title text-7xl md:text-8xl font-black mb-2 tracking-tight text-center">
+    <div class="relative z-10 w-full max-w-3xl px-4 flex flex-col items-center justify-center h-full">
+      <h1 class="lobby-title text-5xl md:text-6xl font-black mb-1 tracking-tight text-center">
         WAYANG KANCIL
       </h1>
-      <p class="text-yellow-400/70 text-sm md:text-base font-mono tracking-widest text-center mb-10 animate-pulse">
+      <p class="text-yellow-400/70 text-xs md:text-sm font-mono tracking-widest text-center mb-4 animate-pulse">
         Bayangan Kelir &middot; Cahaya Blencong &middot; Kisah Nusantara
       </p>
 
-      <div class="lobby-panel p-8 md:p-12 rounded-3xl w-full max-w-2xl">
+      <div class="lobby-panel p-5 md:p-6 rounded-2xl w-full max-w-lg">
         <!-- Judul panel -->
-        <div class="text-center mb-8">
-          <h2 class="text-xl font-bold text-white mb-1">Masuk ke Teater Bayangan</h2>
-          <p class="text-xs text-yellow-400/70 font-mono tracking-widest">Pilih identitas dan cerita Kancil</p>
+        <div class="text-center mb-4">
+          <h2 class="text-base font-bold text-white mb-0.5">Masuk ke Teater Bayangan</h2>
+          <p class="text-[10px] text-yellow-400/70 font-mono tracking-widest">Pilih nama dan cerita Kancil</p>
         </div>
 
         <!-- Player identity -->
-        <div class="space-y-4 mb-8">
+        <div class="space-y-3 mb-4">
           <label class="lobby-label" for="playerName">Nama Pemain</label>
           <input type="text" id="playerName" placeholder="Masukkan nama..." class="lobby-input" />
 
@@ -69,20 +69,8 @@
           🎮 Mulai Permainan
         </button>
 
-        <!-- Room ID input -->
-        <div id="roomIdField" class="mb-6">
-          <label class="lobby-label" for="roomId">ID Ruangan</label>
-          <div class="flex gap-2">
-            <input type="text" id="roomId" placeholder="Ketik ID ruangan..." class="flex-1 lobby-input" />
-            <button id="copyRoomIdBtn" class="btn-secondary-cinematic px-4 py-2 text-xs min-w-[80px]">
-              Salin
-            </button>
-          </div>
-          <div id="displayRoomId" class="mt-2 text-xs font-mono text-yellow-400 hidden"></div>
-        </div>
-
         <!-- Status -->
-        <p id="statusMsg" class="text-xs text-red-400 text-center mb-6 hidden"></p>
+        <p id="statusMsg" class="text-xs text-red-400 text-center mt-3 hidden"></p>
 
         <!-- Waiting players list -->
         <div id="waitingRoom" class="hidden">
@@ -107,24 +95,18 @@
           </div>
         </div>
 
-        <div class="mt-6 text-xs text-gray-500 text-center">
-          Mode: Buruan 2 Pemain &middot; Teater Dalang Cerita
-        </div>
-
-        <div class="mt-4 flex justify-center">
-          <button id="audioBtn" class="btn-secondary-cinematic px-4 py-2 text-xs">
-            🔊 Nyalakan Audio Gamelan
+        <div class="mt-3 flex justify-center gap-2">
+          <button id="audioBtn" class="btn-secondary-cinematic px-3 py-1.5 text-xs">
+            🔊 Audio
           </button>
-          <button id="themeToggleBtn" class="btn-secondary-cinematic px-4 py-2 text-xs ml-2">
-            🌓 Mode Gelap
+          <button id="themeToggleBtn" class="btn-secondary-cinematic px-3 py-1.5 text-xs">
+            🌓 Tema
           </button>
         </div>
 
-        <!-- AI Status -->
-        <div class="mt-4 p-3 bg-black/40 border border-cyan-500/20 rounded-xl text-center">
-          <div class="text-xs text-cyan-400 font-bold font-mono mb-2 uppercase">Status AI</div>
-          <div id="aiStatus" class="text-xs text-gray-400">Memeriksa...</div>
-          <p class="text-[10px] text-gray-500 mt-1">Base URL: https://ai.xemarux.com/v1 | Model: deepseek-v4.1-flash (gratis)</p>
+        <!-- AI Status (compact) -->
+        <div class="mt-3 p-2 bg-black/40 border border-cyan-500/20 rounded-lg text-center">
+          <div id="aiStatus" class="text-[10px] text-gray-400">Memeriksa AI...</div>
         </div>
       </div>
 
