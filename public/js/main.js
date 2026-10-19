@@ -172,6 +172,29 @@ socket.on('playerMoved', (data) => {
   });
 });
 
+socket.on('itemCollected', ({ playerId, playerName, itemId, score }) => {
+  if (!engine) return;
+
+  // Hapus item dari semua client
+  engine.items = engine.items.filter((i) => i.id !== itemId);
+
+  // Re-spawn jika terlalu sedikit
+  const active = engine.items.filter((i) => !i.collected).length;
+  while (active < 4) {
+    engine.spawnItems(1);
+  }
+
+  // Update skor pemain yang mengambil
+  if (playerId === myPlayerId) {
+    score = score || 0;
+    hudScore.textContent = score;
+    showStatus(`${playerName} mengambil timun (+10)`, false);
+  } else {
+    // Tampilkan informasi pemain lain juga bisa, tapi HUD utama milik lokal
+    console.log(`${playerName} collected item ${itemId}`);
+  }
+});
+
 socket.on('useAbility', (data) => {
   triggerAbilityEffect(data);
 });
@@ -277,6 +300,12 @@ function initGameEngine(roomId) {
         direction: me.direction,
         actionState: me.actionState,
       });
+
+      // Deteksi tabrakan item (cucumber/timun) untuk pemain lokal
+      const collected = engine.checkCollisions(myPlayerId);
+      if (collected.length > 0) {
+        socket.emit('itemCollected', { itemId: collected[collected.length - 1] });
+      }
     }
   }, 1000 / 30);
 

@@ -201,17 +201,53 @@ export default class GameEngine {
     this.animId = requestAnimationFrame(this.loop);
   }
 
-  // Mock item (cucumber) akan diisi sepenuhnya di Phase 4
-  spawnMockItems(count = 6) {
+  // ---------- Items (cucumber / timun) ----------
+  spawnItems(count = 8) {
     this.items = [];
     const w = this.canvas.width;
     const h = this.canvas.height;
     for (let i = 0; i < count; i++) {
       this.items.push({
+        id: `item-${Date.now()}-${i}`,
         x: 100 + Math.random() * (w - 200),
         y: 100 + Math.random() * (h - 200),
         type: 'cucumber',
+        collected: false,
       });
     }
+  }
+
+  // Deteksi tabrakan pemain dengan item. Mengembalikan daftar item id yang diambil.
+  checkCollisions(playerId) {
+    const p = this.players.get(playerId);
+    if (!p) return [];
+
+    const collected = [];
+    const radius = 40; // jarak tabrakan (siluet wayang + item)
+
+    for (const item of this.items) {
+      if (item.collected) continue;
+      const dx = p.x - item.x;
+      const dy = p.y - item.y;
+      if (dx * dx + dy * dy < radius * radius) {
+        item.collected = true;
+        collected.push(item.id);
+      }
+    }
+
+    // Bersihkan item yang sudah diambil
+    this.items = this.items.filter((i) => !i.collected);
+
+    // Re-spawn agar jumlah item aktif tetap minimal 4
+    while (this.items.filter((i) => !i.collected).length < 4) {
+      this.spawnItems(1);
+    }
+
+    return collected;
+  }
+
+  // Compat dengan pemanggilan lama dari main.js
+  spawnMockItems(count = 6) {
+    this.spawnItems(count);
   }
 }

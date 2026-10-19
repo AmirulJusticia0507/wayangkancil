@@ -106,6 +106,7 @@ io.on('connection', (socket) => {
     socket.data.playerName = playerName;
     socket.data.character = character;
     socket.data.isHost = true;
+    socket.data.score = 0;
 
     socket.emit('roomCreated', {
       roomId,
@@ -136,6 +137,7 @@ io.on('connection', (socket) => {
     socket.data.playerName = playerName;
     socket.data.character = character;
     socket.data.isHost = false;
+    socket.data.score = 0;
 
     socket.emit('roomJoined', {
       roomId,
@@ -169,6 +171,28 @@ io.on('connection', (socket) => {
       direction,
       actionState,
     });
+  });
+
+  socket.on('itemCollected', ({ itemId }) => {
+    const roomId = socket.data.roomId;
+    if (!roomId) return;
+
+    const room = rooms.get(roomId);
+    if (!room || !room.players.has(socket.id)) return;
+
+    // Tambah skor pemain yang mengambil item
+    const player = room.players.get(socket.id);
+    player.score = (player.score || 0) + 10;
+
+    // Broadcast ke seluruh room agar semua client hapus item & update skor
+    io.to(roomId).emit('itemCollected', {
+      playerId: socket.id,
+      playerName: socket.data.playerName,
+      itemId,
+      score: player.score,
+    });
+
+    console.log(`${socket.data.playerName} collected item ${itemId} in room ${roomId}`);
   });
 
   socket.on('useAbility', ({ abilityId, targetPos }) => {
