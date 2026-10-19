@@ -1,4 +1,5 @@
-// Wayang Kancil - Socket connection & UI handler
+// Wayang Kancil - Socket connection & UI handler (Phase 3)
+import GameEngine from './js/gameEngine.js';
 
 const socket = io();
 
@@ -34,6 +35,8 @@ let myPlayerId = null;
 let myRoom = null;
 let myCharacter = null;
 let isHost = false;
+let engine = null;
+let score = 0;
 
 // ---------- Helpers ----------
 function showStatus(msg, isError = true) {
@@ -89,6 +92,7 @@ socket.on('roomState', (roomState) => {
 
 socket.on('playerLeft', ({ playerId }) => {
   showStatus('Satu pemain meninggalkan room.');
+  if (engine) engine.removePlayer(playerId);
 });
 
 socket.on('error', ({ message }) => {
@@ -102,12 +106,70 @@ socket.on('gameStarted', ({ roomId }) => {
   hudRoom.textContent = roomId;
   hudCharacter.textContent = myCharacter;
 
-  initGame();
+  score = 0;
+  hudScore.textContent = '0';
+  hudTimer.textContent = '0';
+
+  initGameEngine(roomId);
+});
+
+socket.on('gameStateUpdate', ({ players, timer }) => {
+  if (!engine) return;
+
+  hudTimer.textContent = timer;
+
+  // Sinkronisasi posisi pemain dari server (interpolasi di engine)
+  for (const [id, state] of Object.entries(players)) {
+    if (!engine.players.has(id)) {
+      engine.addPlayer(id, {
+        name: id.slice(-4),
+        character: myCharacter,
+        x: state.x,
+        y: state.y,
+      });
+    }
+    engine.updatePlayer(id, {
+      x: state.x,
+      y: state.y,
+      direction: state.direction,
+      actionState: state.actionState,
+    });
+  }
+
+  // Hapus pemain yang sudah tidak ada di state server
+  for (const [id] of engine.players.entries()) {
+    if (!(id in players)) {
+      engine.removePlayer(id);
+    }
+  }
+
+  // Skor sederhana berdasarkan jarak tempuh pemain lokal
+  const me = players[myPlayerId];
+  if (me) {
+    score = Math.floor(me.x / 10);
+    hudScore.textContent = score;
+  }
 });
 
 socket.on('playerMoved', (data) => {
+  // Fallback jika gameStateUpdate belum sampai; langsung update target
+  if (!engine) return;
   if (data.playerId === myPlayerId) return;
-  updateRemotePlayer(data);
+
+  if (!engine.players.has(data.playerId)) {
+    engine.addPlayer(data.playerId, {
+      name: data.playerName,
+      character: data.character,
+      x: data.x,
+      y: data.y,
+    });
+  }
+  engine.updatePlayer(data.playerId, {
+    x: data.x,
+    y: data.y,
+    direction: data.direction,
+    actionState: data.actionState,
+  });
 });
 
 socket.on('useAbility', (data) => {
@@ -115,12 +177,13 @@ socket.on('useAbility', (data) => {
 });
 
 socket.on('gameOver', ({ winner, finalScores: scores }) => {
+  if (engine) engine.stop();
   gameContainer.classList.add('hidden');
   gameOver.classList.remove('hidden');
 
   let html = '<h3 class="text-lg font-bold text-yellow-400 mb-2">Skor Akhir</h3><ul class="text-left list-disc list-inside mb-4">';
-  for (const [id, score] of Object.entries(scores)) {
-    html += `<li>${id}: ${score}</li>`;
+  for (const [id, scoreVal] of Object.entries(scores)) {
+    html += `<li>${id}: ${scoreVal}</li>`;
   }
   html += '</ul>';
   finalScores.innerHTML = html;
@@ -171,86 +234,62 @@ startGameBtn.addEventListener('click', () => {
   socket.emit('startGame');
 });
 
-// ---------- Game loop (Phase 2 placeholder; full engine in Phase 3) ----------
-function initGame() {
+// ---------- Game engine (Phase 3) ----------
+function initGameEngine(roomId) {
   const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  engine = new GameEngine(canvas);
+  engine.setRoom(roomId);
 
-  const player = {
-    id: myPlayerId,
+  // Tambahkan pemain lokal
+  engine.addPlayer(myPlayerId, {
     name: playerNameInput.value.trim(),
     character: myCharacter,
     x: canvas.width / 2,
     y: canvas.height / 2,
-    direction: 'right',
-    actionState: 'idle',
-  };
+  });
 
+  // Item mock (timun) akan di-generate sepenuhnya di Phase 4
+  engine.spawnMockItems(8);
+
+  // Input lokal -> kirim playerMoved ke server
   const keys = {};
   window.addEventListener('keydown', (e) => { keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
+  // Loop input 30 FPS -> emit ke server, engine sendiri render via requestAnimationFrame
   setInterval(() => {
     let dx = 0, dy = 0;
-    if (keys['ArrowLeft'] || keys['KeyA']) { dx = -4; player.direction = 'left'; }
-    if (keys['ArrowRight'] || keys['KeyD']) { dx = 4; player.direction = 'right'; }
-    if (keys['ArrowUp'] || keys['KeyW']) dy = -4;
-    if (keys['ArrowDown'] || keys['KeyS']) dy = 4;
+    if (keys['ArrowLeft'] || keys['KeyA']) { dx = -5; }
+    if (keys['ArrowRight'] || keys['KeyD']) { dx = 5; }
+    if (keys['ArrowUp'] || keys['KeyW']) dy = -5;
+    if (keys['ArrowDown'] || keys['KeyS']) dy = 5;
 
-    player.x += dx;
-    player.y += dy;
-    player.actionState = (dx !== 0 || dy !== 0) ? 'moving' : 'idle';
+    const me = engine.players.get(myPlayerId);
+    if (me) {
+      me.targetX = Math.max(20, Math.min(canvas.width - 20, me.targetX + dx));
+      me.targetY = Math.max(20, Math.min(canvas.height - 20, me.targetY + dy));
+      me.direction = dx < 0 ? 'left' : dx > 0 ? 'right' : me.direction;
+      me.actionState = (dx !== 0 || dy !== 0) ? 'moving' : 'idle';
 
-    player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
-    player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
-
-    socket.emit('playerMoved', {
-      x: player.x,
-      y: player.y,
-      direction: player.direction,
-      actionState: player.actionState,
-    });
-
-    draw(player, ctx);
+      socket.emit('playerMoved', {
+        x: me.targetX,
+        y: me.targetY,
+        direction: me.direction,
+        actionState: me.actionState,
+      });
+    }
   }, 1000 / 30);
 
-  window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  });
-}
-
-function draw(player, ctx) {
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-  const size = 40;
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  if (player.direction === 'left') ctx.scale(-1, 1);
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(-size / 2, -size / 2, size, size);
-  ctx.restore();
-
-  ctx.fillStyle = '#fff';
-  ctx.font = '14px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(player.name, player.x, player.y - size / 2 - 8);
-
-  hudScore.textContent = Math.floor(player.x / 10);
-}
-
-function updateRemotePlayer(data) {
-  // Remote player rendering handled fully in Phase 3 gameEngine.js
+  engine.start();
 }
 
 function triggerAbilityEffect(data) {
-  // Placeholder for ability effects (Phase 4)
+  // Placeholder untuk efek ability (Phase 4)
 }
 
 playAgainBtn.addEventListener('click', () => {
   gameOver.classList.add('hidden');
   lobby.classList.remove('hidden');
+  if (engine) engine.stop();
   location.reload();
 });
