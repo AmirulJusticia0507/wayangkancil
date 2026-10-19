@@ -456,6 +456,7 @@ function computeEnding(choices = []) {
   }
 
   if (clever > force && clever >= peace) return 'clever';
+  if (force >= 2 && clever === 0) return 'sad';
   if (force > clever && force >= peace) return 'force';
   if (peace > clever && peace > force) return 'peace';
   return 'neutral';
@@ -477,18 +478,49 @@ function showPiwulangScreen(ep, choices = []) {
     clever: 'Kancil menang melalui kecerdikan dan trik. Hutan menghormati akal di atas kekerasan.',
     force: 'Kancil berhasil melalui keberanian dan confrontasi langsung. Namun hutan tetap penamakan ancaman.',
     peace: 'Kancil menyelesaikan konflik melalui dialog dan perdamaian. Harmoni hutan terjaga.',
+    sad: 'Kancil gagal bertahan. Akal yang diabaikan dan keberanian sembarangan hanya membawa hancuran. Hutan meratap kehilangan sang pendamping cerdik.',
     neutral: 'Kancil menemukan jalan tengah antara akal dan keberanian.',
   };
 
   const summaries = {
-    'ep-1': 'Kancil berhasil menyeberangi sungai dengan membohongi para buaya. Buah-buahan di seberang tercapai melalui kecerdikan, bukan kekerasan.',
-    'ep-2': 'Kancil mengakali Harimau dua kali dengan ilusi gong dan sabuk palsu. Penampilan boleh menipu, tetapi akal menyelamatkan.',
-    'ep-3': 'Kancil kalah dari Siput dalam lomba lari. Kecepatan sendirian tidak cukup — kerja sama dan strategi lebih kuat.',
-    'ep-4': 'Kancil menjadi hakim dan membalas kebaikan Kerbau dengan menindih Serigala yang tidak berterima kasih. Pilih siapa yang dipercaya.',
-    'ep-5': 'Kancil menyelesaikan sengketa Harimau dan Gajah melalui dialog damai. Tanpa pertumpahan darah, hutan tetap harmonis.',
+    'ep-1': {
+      clever: 'Kancil menyeberangi sungai dengan membohongi para buaya. Akal mengalahkan kekuatan.',
+      force: 'Kancil lolos tapi banyak buaya yang sakit. Hutan tak lagi nyaman.',
+      peace: 'Kancil dan buaya berdamai di tepi sungai. Bersama-sama bagi buah.',
+      sad: 'Kancil ditangkap buaya di tengah sungai. Akhirnya tidak pernah kembali ke hutan.',
+      neutral: 'Kancil menyeberangi sungai. Beberapa buaya kalah, beberapa berhasil lari.',
+    },
+    'ep-2': {
+      clever: 'Kancil mengakali Harimau dengan ilusi gong dan sabuk palsu. Akal menang.',
+      force: 'Kancil lolos dari Harimau tapi cidera. Hutan masih ada ancaman.',
+      peace: 'Harimau dan Kancil berdamai. Tidak ada lagi pertempuran di hutan.',
+      sad: 'Kancil ditangkap Harimau. Ilusi gagal, dan hutan kehilangan pendamping cerdik.',
+      neutral: 'Kancil dan Harimau saling menghindari. Hutan tenang tapi tidak damai.',
+    },
+    'ep-3': {
+      clever: 'Kancil kalah dari Siput. Kerja sama tim mengalahkan kecepatan individual.',
+      force: 'Kancil berlari kencang tapi kelelahan. Siput tetap ada di finish.',
+      peace: 'Kancil dan Siput berdamai. Lomba berakhir tanpa pemenang atau pemenang.',
+      sad: 'Kancil tersesat di tengah hutan setelah mengabaikan strategi Siput.',
+      neutral: 'Kancil hampir mencapai finish tapi Siput sudah di sana.',
+    },
+    'ep-4': {
+      clever: 'Kancil menjadi hakim dan membalikkan situasi. Kerbau selamat.',
+      force: 'Kancil berusaha paksa tapi Serigala masih mengancam.',
+      peace: 'Kerbau dan Serigala berdamai thanks to Kancil mediation.',
+      sad: 'Serigala memakan Kerbau. Kancil gagal sebagai hakim dan pergi dari hutan.',
+      neutral: 'Kerbau selamat tapi Serigala tetap di hutan.',
+    },
+    'ep-5': {
+      clever: 'Kancil bagi air adil. Harimau dan Gajah setuju. Hutan damai.',
+      force: 'Kancil memaksa pembagian air. Beberapa hewan tidak puas.',
+      peace: 'Semua hewan setuju. Sumber air dibagi adil, hutan kembali damai.',
+      sad: 'Harimau dan Gajah bertarung. Kancil tidak dapat menghentikan perang hutan.',
+      neutral: 'Air dibagi tapi tidak semua hewan puas.',
+    },
   };
 
-  piwulangEnding.innerHTML = `<strong>Akhir (${endingKey}):</strong> ${endings[endingKey]}<br><br>${summaries[ep.id] || 'Cerita selesai.'}`;
+  piwulangEnding.innerHTML = `<strong>Akhir (${endingKey}):</strong> ${endings[endingKey]}<br><br>${summaries[ep.id]?.[endingKey] || summaries[ep.id] || 'Cerita selesai.'}`;
 }
 
 piwulangStartBtn.addEventListener('click', () => {
