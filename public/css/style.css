@@ -157,6 +157,322 @@ canvas {
   transform: rotateY(10deg) translateZ(30px);
 }
 
+/* ============================================================
+   Cinematic Lobby — Wayang Kulit Aesthetic
+   ============================================================ */
+
+/* Background animasi Kelir + Blencong */
+.lobby-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    circle at 50% 50%,
+    #3a2a1a 0%,
+    #1a1008 45%,
+    #0a0502 100%
+  );
+  overflow: hidden;
+}
+
+.lobby-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/background/kelir-bg.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  animation: kelir-drift 20s linear infinite;
+}
+
+@keyframes kelir-drift {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(10px, -10px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Blencong glow berkedip di pojok */
+.lobby-blencong {
+  position: fixed;
+  top: -10%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(
+    circle at 70% 30%,
+    rgba(255, 213, 79, 0.25) 0%,
+    rgba(255, 213, 79, 0.08) 35%,
+    transparent 70%
+  );
+  z-index: -1;
+  animation: blencong-pulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes blencong-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1.0; transform: scale(1.15); }
+}
+
+/* Title wayang dengan drop shadow yang dramatis */
+.lobby-title {
+  font-family: 'Serif', serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(
+    135deg,
+    #fbbf24 0%,
+    #f59e0b 50%,
+    #d97706 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px rgba(255, 213, 79, 0.6));
+  animation: title-glow 4s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 213, 79, 0.6)); }
+  50% { filter: drop-shadow(0 0 35px rgba(255, 213, 79, 0.9)); }
+}
+
+/* Kartu lobby modern */
+.lobby-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 213, 79, 0.25);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+}
+
+/* Label input */
+.lobby-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Input modern */
+.lobby-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 213, 79, 0.2);
+  border-radius: 10px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.lobby-input:focus {
+  outline: none;
+  border-color: #fbbf24;
+  box-shadow: 0 0 15px rgba(255, 213, 79, 0.2);
+}
+
+/* Select modern */
+.lobby-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 213, 79, 0.2);
+  border-radius: 10px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #fbbf24 50%),
+    linear-gradient(135deg, #fbbf24 50%, transparent 50%);
+  background-position: calc(100% - 12px) calc(1em + 2px),
+    calc(100% - 8px) calc(1em + 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.lobby-select:focus {
+  outline: none;
+  border-color: #fbbf24;
+}
+
+/* Episode cards grid */
+.episode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.episode-card {
+  position: relative;
+  height: 150px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 213, 79, 0.2);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.episode-card:hover {
+  transform: translateY(-4px);
+  border-color: #fbbf24;
+  box-shadow: 0 10px 30px rgba(255, 213, 79, 0.15);
+}
+
+.episode-card.selected {
+  border-color: #fbbf24;
+  background: rgba(255, 213, 79, 0.1);
+  box-shadow: 0 0 25px rgba(255, 213, 79, 0.2);
+}
+
+.episode-card-done-bg {
+  outline: 2px solid #10b981;
+  outline-offset: -2px;
+}
+
+.episode-card-thumb {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+  transition: opacity 0.25s ease;
+}
+
+.episode-card:hover .episode-card-thumb {
+  opacity: 0.75;
+}
+
+.episode-card-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1rem;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0) 50%
+  );
+}
+
+.episode-card-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.episode-card-subtitle {
+  font-size: 0.7rem;
+  color: #fbbf24;
+  font-family: monospace;
+}
+
+.episode-card-done {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(16, 185, 129, 0.9);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Tombol aksi utama */
+.btn-primary-cinematic {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  color: #000;
+  font-weight: 900;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 25px rgba(255, 213, 79, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-primary-cinematic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(255, 213, 79, 0.6);
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+}
+
+.btn-primary-cinematic:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 15px rgba(255, 213, 79, 0.3);
+}
+
+.btn-secondary-cinematic {
+  width: 100%;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 213, 79, 0.25);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-secondary-cinematic:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.btn-secondary-cinematic:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Section divider */
+.lobby-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 213, 79, 0.3) 50%,
+    transparent 100%
+  );
+  margin: 1.5rem 0;
+}
+
+/* Hiring text */
+.lobby-caption {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-family: monospace;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-top: 1rem;
+}
+
 /* Narrative Story Scene (Phase 6) */
 .narrative-bg {
   position: absolute;

@@ -106,6 +106,36 @@ function populateEpisodes() {
     opt.textContent = `${ep.title} — ${ep.subtitle}${done}`;
     episodeSelect.appendChild(opt);
   }
+  renderEpisodeCards();
+}
+
+function renderEpisodeCards() {
+  const container = document.getElementById('episodeCards');
+  const episodes = getAllEpisodes();
+  const selected = episodeSelect.value || '';
+  container.innerHTML = '';
+
+  for (const ep of episodes) {
+    const done = isEpisodeCompleted(ep.id);
+    const card = document.createElement('div');
+    card.className = `episode-card ${selected === ep.id ? 'selected' : ''} ${done ? 'episode-card-done-bg' : ''}`;
+    card.dataset.episodeId = ep.id;
+    card.innerHTML = `
+      <div class="episode-card-thumb" style="background-color: ${ep.bgColor};"></div>
+      <div class="episode-card-content">
+        <div class="episode-card-title">${ep.title}</div>
+        <div class="episode-card-subtitle">${ep.subtitle}</div>
+      </div>
+      ${done ? '<div class="absolute top-0.5rem right-0.5rem bg-emerald-500/90 text-black text-[0.65rem] font-black px-2 py-0.5 rounded uppercase">Selesai</div>' : ''}
+    `;
+    card.onclick = () => {
+      episodeSelect.value = ep.id;
+      myEpisode = ep.id;
+      renderEpisodeCards();
+      renderVoteOptions();
+    };
+    container.appendChild(card);
+  }
 }
 
 function renderVoteOptions() {
@@ -143,6 +173,7 @@ renderVoteOptions();
 
 episodeSelect.addEventListener('change', () => {
   myEpisode = episodeSelect.value || null;
+  renderEpisodeCards();
   renderVoteOptions();
 });
 

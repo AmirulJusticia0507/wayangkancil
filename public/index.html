@@ -11,102 +11,113 @@
 <body class="bg-gray-900 text-white overflow-hidden">
 
   <!-- Lobby / Waiting Room -->
-  <div id="lobby" class="fixed inset-0 z-10 flex flex-col items-center justify-center bg-cover bg-center" style="background-image: url('/assets/background/kelir-bg.png');">
-    <h1 class="text-6xl font-black text-yellow-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] mb-8">Wayang Kancil</h1>
+  <div id="lobby" class="fixed inset-0 z-10 flex flex-col items-center justify-center">
+    <div class="lobby-bg"></div>
+    <div class="lobby-blencong"></div>
 
-    <div class="lobby-card bg-black/60 backdrop-blur-sm p-8 rounded-xl border border-yellow-500/30 shadow-[0_0_30px_rgba(255,213,79,0.2)] w-full max-w-md">
-      <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Lobby Game</h2>
+    <div class="relative z-10 w-full max-w-5xl px-6 flex flex-col items-center justify-center h-full">
+      <h1 class="lobby-title text-7xl md:text-8xl font-black mb-2 tracking-tight text-center">
+        WAYANG KANCIL
+      </h1>
+      <p class="text-yellow-400/70 text-sm md:text-base font-mono tracking-widest text-center mb-10 animate-pulse">
+        Bayangan Kelir &middot; Cahaya Blencong &middot; Kisah Nusantara
+      </p>
 
-      <!-- Player identity -->
-      <div class="space-y-4 mb-6">
-        <div>
-          <label class="block text-sm text-gray-300 mb-1">Nama Pemain</label>
-          <input type="text" id="playerName" placeholder="Masukkan nama..." class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500" />
+      <div class="lobby-panel p-8 md:p-12 rounded-3xl w-full max-w-2xl">
+        <!-- Judul panel -->
+        <div class="text-center mb-8">
+          <h2 class="text-xl font-bold text-white mb-1">Masuk ke Teater Bayangan</h2>
+          <p class="text-xs text-yellow-400/70 font-mono tracking-widest">Pilih identitas dan cerita Kancil</p>
         </div>
 
-        <div>
-          <label class="block text-sm text-gray-300 mb-1">Karakter</label>
-          <select id="characterSelect" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500">
+        <!-- Player identity -->
+        <div class="space-y-4 mb-8">
+          <label class="lobby-label" for="playerName">Nama Pemain</label>
+          <input type="text" id="playerName" placeholder="Masukkan nama..." class="lobby-input" />
+
+          <label class="lobby-label" for="characterSelect">Karakter Wayang</label>
+          <select id="characterSelect" class="lobby-select">
             <option value="kancil">Si Kancil</option>
             <option value="pak-tani">Pak Tani</option>
             <option value="macan">Macan</option>
             <option value="buaya">Buaya</option>
           </select>
-        </div>
 
-        <div>
-          <label class="block text-sm text-gray-300 mb-1">Episode Cerita</label>
-          <select id="episodeSelect" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500">
-            <option value="">-- Tanpa Episode (Chase Mode) --</option>
+          <label class="lobby-label" for="episodeSelect">Episode Cerita (opsional)</label>
+          <select id="episodeSelect" class="lobby-select">
+            <option value="">-- Mode Buruan (Tanpa Cerita) --</option>
           </select>
         </div>
-      </div>
 
-      <!-- Room actions -->
-      <div class="grid grid-cols-2 gap-4 mb-6">
-        <button id="createRoomBtn" class="btn-3d py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded shadow-[0_0_15px_rgba(255,213,79,0.3)] transition">
-          Buat Room
-        </button>
-        <button id="joinRoomBtn" class="btn-3d py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded shadow-[0_0_15px_rgba(255,213,79,0.4)] transition">
-          Gabung Room
-        </button>
-      </div>
-
-      <!-- Cerita / Story Mode -->
-      <div id="storyModeField" class="mb-6 border-t border-gray-700 pt-6">
-        <h3 class="text-lg font-bold text-yellow-300 mb-3 text-center">Cerita Si Kancil</h3>
-        <button id="storyModeBtn" class="btn-3d w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded shadow-[0_0_15px_rgba(34,197,94,0.3)] transition">
-          Mode Cerita (Dalang)
-        </button>
-        <div id="storyList" class="mt-4 hidden space-y-2 max-h-48 overflow-y-auto pr-2">
-          <!-- episode list injected here -->
-        </div>
-      </div>
-
-      <!-- Room ID input -->
-      <div id="roomIdField" class="mb-6">
-        <label class="block text-sm text-gray-300 mb-1">Room ID</label>
-        <div class="flex gap-2">
-          <input type="text" id="roomId" placeholder="Ketik Room ID..." class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500" />
-          <button id="copyRoomIdBtn" class="btn-3d px-4 py-2 bg-gray-700 border border-gray-600 rounded text-gray-300 hover:text-white">Salin</button>
-        </div>
-        <div id="displayRoomId" class="mt-2 text-xs font-mono text-yellow-400 hidden"></div>
-      </div>
-
-      <p id="statusMsg" class="text-xs text-red-400 text-center mb-4 hidden"></p>
-
-      <!-- Waiting players list -->
-      <div id="waitingRoom" class="hidden">
-        <h3 class="text-lg font-bold text-yellow-300 mb-3 text-center">Pemain di Room</h3>
-        <div id="playersList" class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-2">
-          <!-- players injected here -->
+        <!-- Episode cards preview (tampil saat episode dipilih) -->
+        <div id="episodeCards" class="episode-grid mb-8 hidden">
+          <!-- diisi oleh JS -->
         </div>
 
-        <!-- Voting untuk Cerita (Phase 7.4 Dalang Mode) -->
-        <div id="votePanel" class="hidden mb-4 border border-yellow-500/30 rounded-lg p-4 bg-yellow-500/10">
-          <h4 class="text-sm font-bold text-yellow-300 mb-2 text-center">🗳️ Pilih Cerita</h4>
-          <div id="voteOptions" class="grid grid-cols-2 gap-2 mb-3">
-            <!-- vote buttons injected here -->
+        <div class="lobby-divider"></div>
+
+        <!-- Room actions -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <button id="createRoomBtn" class="btn-primary-cinematic">
+            Buat Ruangan
+          </button>
+          <button id="joinRoomBtn" class="btn-secondary-cinematic">
+            Gabung Ruangan
+          </button>
+        </div>
+
+        <!-- Room ID input -->
+        <div id="roomIdField" class="mb-6">
+          <label class="lobby-label" for="roomId">ID Ruangan</label>
+          <div class="flex gap-2">
+            <input type="text" id="roomId" placeholder="Ketik ID ruangan..." class="flex-1 lobby-input" />
+            <button id="copyRoomIdBtn" class="btn-secondary-cinematic px-4 py-2 text-xs min-w-[80px]">
+              Salin
+            </button>
           </div>
-          <div id="voteResults" class="text-xs text-gray-300 text-center mb-2"></div>
+          <div id="displayRoomId" class="mt-2 text-xs font-mono text-yellow-400 hidden"></div>
         </div>
 
-        <div class="flex justify-end">
-          <button id="startGameBtn" class="btn-3d px-6 py-2 bg-green-500 hover:bg-green-400 text-black font-bold rounded shadow-[0_0_15px_rgba(34,197,94,0.4)] transition disabled:opacity-50 disabled:cursor-not-allowed">
-            Mulai Game
+        <!-- Status -->
+        <p id="statusMsg" class="text-xs text-red-400 text-center mb-6 hidden"></p>
+
+        <!-- Waiting players list -->
+        <div id="waitingRoom" class="hidden">
+          <h3 class="text-lg font-bold text-yellow-300 mb-3 text-center">Pemain di Ruangan</h3>
+          <div id="playersList" class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-2">
+            <!-- players injected here -->
+          </div>
+
+          <!-- Voting untuk Cerita (Phase 7.4 Dalang Mode) -->
+          <div id="votePanel" class="hidden mb-4 border border-yellow-500/30 rounded-xl p-4 bg-yellow-500/5">
+            <h4 class="text-sm font-bold text-yellow-300 mb-2 text-center">🗳️ Pilih Cerita Bersama</h4>
+            <div id="voteOptions" class="grid grid-cols-2 gap-2 mb-3">
+              <!-- vote buttons injected here -->
+            </div>
+            <div id="voteResults" class="text-xs text-gray-300 text-center mb-2"></div>
+          </div>
+
+          <div class="flex justify-end">
+            <button id="startGameBtn" class="btn-primary-cinematic disabled:opacity-40 disabled:cursor-not-allowed">
+              Mulai Cerita
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-6 text-xs text-gray-500 text-center">
+          Mode: Buruan 2 Pemain &middot; Teater Dalang Cerita
+        </div>
+
+        <div class="mt-4 flex justify-center">
+          <button id="audioBtn" class="btn-secondary-cinematic px-4 py-2 text-xs">
+            🔊 Nyalakan Audio Gamelan
           </button>
         </div>
       </div>
 
-      <div class="mt-6 text-xs text-gray-400 text-center">
-        Mode: P2P Chase & Outsmart / Dalang Mode
-      </div>
-
-      <div class="mt-4 flex justify-center">
-        <button id="audioBtn" class="btn-3d px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm border border-gray-600 transition">
-          🔊 Nyalakan Audio
-        </button>
-      </div>
+      <p class="lobby-caption mt-8">
+        Wayang Kancil &mdash; Warisan Budaya Nusantara
+      </p>
     </div>
   </div>
 
