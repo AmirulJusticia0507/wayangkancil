@@ -47,15 +47,8 @@
           <label class="lobby-label" for="playerName">Nama Pemain</label>
           <input type="text" id="playerName" placeholder="Masukkan nama..." class="lobby-input" />
 
-          <label class="lobby-label" for="characterSelect">Karakter Wayang</label>
-          <select id="characterSelect" class="lobby-select">
-            <option value="kancil">Si Kancil</option>
-            <option value="pak-tani">Pak Tani</option>
-            <option value="macan">Macan</option>
-            <option value="buaya">Buaya</option>
-            <option value="siput">Siput</option>
-            <option value="serigala">Serigala</option>
-          </select>
+          <!-- Karakter utama: Si Kancil (kelinci) — tidak perlu pilih karakter lain -->
+          <input type="hidden" id="characterSelect" value="kancil" />
 
           <label class="lobby-label" for="episodeSelect">Episode Cerita (opsional)</label>
           <select id="episodeSelect" class="lobby-select">
