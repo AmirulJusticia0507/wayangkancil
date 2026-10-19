@@ -326,8 +326,12 @@ function startOpenWorld() {
   // Inisialisasi world engine
   const canvas = document.getElementById('gameCanvas');
   canvas.style.cursor = 'grab';
-  worldEngine = new WorldEngine(canvas, canvas.getContext('2d'));
-  worldEngine.createDefaultMap();
+  try {
+    worldEngine = new WorldEngine(canvas, canvas.getContext('2d'));
+    worldEngine.createDefaultMap();
+  } catch (e) {
+    console.error('Error initializing world engine:', e);
+  }
 
   // Callback ketika bicara dengan NPC yang punya cerita
   worldEngine.onMenuClick = () => {
@@ -400,6 +404,9 @@ function stopOpenWorld() {
   gameContainer.classList.add('hidden');
   lobby.classList.remove('hidden');
 }
+
+// Expose startOpenWorld to window for inline onclick fallback
+window.startOpenWorld = startOpenWorld;
 
 if (startGameBtn2) {
   startGameBtn2.addEventListener('click', startOpenWorld);
