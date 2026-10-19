@@ -341,6 +341,80 @@ canvas {
   outline-offset: -2px;
 }
 
+/* Episode terunci (adaptive selection) */
+.episode-card-locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+  border-color: rgba(255, 213, 79, 0.1);
+  cursor: not-allowed;
+}
+
+/* ---------- Dark / Light Theme (Phase 8.9) ---------- */
+body.theme-light {
+  --bg-light: #f3f4f6;
+  --text-light: #111827;
+  --muted-light: #6b7280;
+}
+
+body.theme-light #lobby,
+body.theme-light .lobby-panel,
+body.theme-light .lobby-input,
+body.theme-light .lobby-select {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+body.theme-light .lobby-input,
+body.theme-light .lobby-select {
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+body.theme-light .lobby-label {
+  color: #374151 !important;
+}
+
+body.theme-light .lobby-caption {
+  color: #4b5563 !important;
+}
+
+body.theme-light .episode-card {
+  background: #e5e7eb !important;
+  border-color: #9ca3af !important;
+  color: #111827 !important;
+}
+
+body.theme-light .episode-card-subtitle {
+  color: #374151 !important;
+}
+
+body.theme-light .text-gray-300,
+body.theme-light .text-gray-400,
+body.theme-light .text-gray-500 {
+  color: #374151 !important;
+}
+
+body.theme-light .btn-secondary-cinematic {
+  background: #e5e7eb !important;
+  border-color: #9ca3af !important;
+  color: #111827 !important;
+}
+
+body.theme-light .btn-secondary-cinematic:hover {
+  background: #d1d5db !important;
+  border-color: #fbbf24 !important;
+  color: #b45309 !important;
+}
+
+body.theme-light #statusMsg {
+  color: #dc2626 !important;
+}
+
+body.theme-light #farmMsg {
+  color: #15803d !important;
+}
+
 .episode-card-thumb {
   position: absolute;
   inset: 0;

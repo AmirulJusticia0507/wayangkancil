@@ -104,6 +104,23 @@ function isEpisodeCompleted(episodeId) {
   return !!storyProgress[episodeId]?.completed;
 }
 
+// ---------- Adaptive Episode Selection (Phase 8.8) ----------
+// Episode 1 terbuka secara default; episode selanjutnya terbuka jika episode sebelumnya sudah selesai.
+function isEpisodeUnlocked(episodeId) {
+  const episodes = getAllEpisodes();
+  const idx = episodes.findIndex((e) => e.id === episodeId);
+  if (idx === -1) return false;
+  if (idx === 0) return true; // ep-1 selalu terbuka
+  const prev = episodes[idx - 1].id;
+  return isEpisodeCompleted(prev);
+}
+
+function getEpisodeStatus(episodeId) {
+  if (isEpisodeCompleted(episodeId)) return 'completed';
+  if (isEpisodeUnlocked(episodeId)) return 'available';
+  return 'locked';
+}
+
 loadStoryProgress();
 
 // ---------- Heart / Hubungan NPC (Phase 8.5) ----------
@@ -158,6 +175,47 @@ function getHeartLabel(value) {
 }
 
 loadHearts();
+
+// ---------- Dark Mode Toggle (Phase 8.9) ----------
+const THEME_STORAGE_KEY = 'wayangkancil_theme';
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light') {
+      document.body.classList.add('theme-light');
+      if (themeToggleBtn) themeToggleBtn.textContent = '☀️ Mode Terang';
+    } else {
+      document.body.classList.remove('theme-light');
+      if (themeToggleBtn) themeToggleBtn.textContent = '🌓 Mode Gelap';
+    }
+  } catch (e) {
+    // silent
+  }
+}
+
+function saveTheme(isLight) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, isLight ? 'light' : 'dark');
+  } catch (e) {
+    // silent
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('theme-light');
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = isLight ? '☀️ Mode Terang' : '🌓 Mode Gelap';
+  }
+  saveTheme(isLight);
+}
+
+loadTheme();
+
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', toggleTheme);
+}
 
 // Tampilkan status hati di lobby (disetelah elemen DOM siap)
 function renderHeartStatus() {
@@ -426,8 +484,10 @@ function populateEpisodes() {
   for (const ep of episodes) {
     const opt = document.createElement('option');
     opt.value = ep.id;
+    opt.disabled = !isEpisodeUnlocked(ep.id);
     const done = isEpisodeCompleted(ep.id) ? ' ✅' : '';
-    opt.textContent = `${ep.title} — ${ep.subtitle}${done}`;
+    const locked = !isEpisodeUnlocked(ep.id) ? ' 🔒' : '';
+    opt.textContent = `${ep.title} — ${ep.subtitle}${done}${locked}`;
     episodeSelect.appendChild(opt);
   }
   renderEpisodeCards();
@@ -440,9 +500,11 @@ function renderEpisodeCards() {
   container.innerHTML = '';
 
   for (const ep of episodes) {
-    const done = isEpisodeCompleted(ep.id);
+    const status = getEpisodeStatus(ep.id);
+    const done = status === 'completed';
+    const locked = status === 'locked';
     const card = document.createElement('div');
-    card.className = `episode-card ${selected === ep.id ? 'selected' : ''} ${done ? 'episode-card-done-bg' : ''}`;
+    card.className = `episode-card ${selected === ep.id ? 'selected' : ''} ${done ? 'episode-card-done-bg' : ''} ${locked ? 'episode-card-locked' : ''}`;
     card.dataset.episodeId = ep.id;
     card.innerHTML = `
       <div class="episode-card-thumb" style="background-color: ${ep.bgColor};"></div>
@@ -451,13 +513,16 @@ function renderEpisodeCards() {
         <div class="episode-card-subtitle">${ep.subtitle}</div>
       </div>
       ${done ? '<div class="absolute top-0.5rem right-0.5rem bg-emerald-500/90 text-black text-[0.65rem] font-black px-2 py-0.5 rounded uppercase">Selesai</div>' : ''}
+      ${locked ? '<div class="absolute top-0.5rem right-0.5rem bg-gray-600/90 text-white text-[0.65rem] font-black px-2 py-0.5 rounded uppercase">Terunci</div>' : ''}
     `;
-    card.onclick = () => {
-      episodeSelect.value = ep.id;
-      myEpisode = ep.id;
-      renderEpisodeCards();
-      renderVoteOptions();
-    };
+    if (!locked) {
+      card.onclick = () => {
+        episodeSelect.value = ep.id;
+        myEpisode = ep.id;
+        renderEpisodeCards();
+        renderVoteOptions();
+      };
+    }
     container.appendChild(card);
   }
 }
@@ -466,6 +531,7 @@ function renderVoteOptions() {
   const episodes = getAllEpisodes();
   voteOptions.innerHTML = '';
   for (const ep of episodes) {
+    if (!isEpisodeUnlocked(ep.id)) continue; // skip episode terunci di panel voting
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `px-3 py-2 rounded text-sm font-medium border transition ${episodeSelect.value === ep.id ? 'bg-yellow-500 text-black border-yellow-500' : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'}`;
