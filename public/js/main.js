@@ -3,6 +3,7 @@ import GameEngine from './gameEngine.js';
 import SoundManager from './sound.js';
 import { getAllEpisodes } from './episodes.js';
 import { NarrativeEngine } from './narrativeEngine.js';
+import WorldEngine from './worldEngine.js';
 
 // Vercel WebSocket connections must skip Socket.io's polling handshake so the
 // entire connection remains pinned to one function instance.
@@ -39,6 +40,7 @@ const joinRoomBtn = document.getElementById('joinRoomBtn');
 const copyRoomIdBtn = document.getElementById('copyRoomIdBtn');
 const startGameBtn = document.getElementById('startGameBtn');
 const storyModeBtn = document.getElementById('storyModeBtn');
+const openWorldBtn = document.getElementById('openWorldBtn');
 const playersList = document.getElementById('playersList');
 
 const hudRoom = document.getElementById('hudRoom');
@@ -73,6 +75,8 @@ let playerChoices = []; // { scene, choice, effect }
 let isSoloMode = false; // Cerita sendiri tanpa room/multiplayer
 let soloStoryQueue = []; // antrean episode yang akan diputar berurutan
 let soloStoryIndex = 0; // indeks episode saat ini dalam antrean
+let worldEngine = null; // Open world engine (Harvest Moon style)
+let isOpenWorldMode = false; // Mode open world aktif
 
 // ---------- Story Progress (Phase 7.3) ----------
 const STORAGE_KEY = 'wayangkancil_progress';
@@ -288,6 +292,71 @@ if (btn) {
       console.error('Error in startSoloStory:', e);
     }
   });
+}
+
+// ---------- Open World Mode (Harvest Moon style) ----------
+function startOpenWorld() {
+  const playerName = playerNameInput.value.trim() || 'Pemain';
+  playerNameInput.value = playerName;
+
+  myCharacter = 'kancil';
+  isOpenWorldMode = true;
+
+  // Sembunyikan lobby, tampilkan game canvas
+  lobby.classList.add('hidden');
+  waitingRoom.classList.add('hidden');
+  narrativeScene.classList.add('hidden');
+  piwulangScreen.classList.add('hidden');
+  gameContainer.classList.remove('hidden');
+
+  // Inisialisasi world engine
+  const canvas = document.getElementById('gameCanvas');
+  worldEngine = new WorldEngine(canvas, canvas.getContext('2d'));
+  worldEngine.createDefaultMap();
+  worldEngine.start();
+
+  // Input keyboard untuk open world
+  window.addEventListener('keydown', openWorldKeyDown);
+  window.addEventListener('keyup', openWorldKeyUp);
+
+  showStatus('Selamat datang di Dunia Wayang! Gunakan WASD/Arrow untuk bergerak, SPACE untuk interaksi.', false);
+}
+
+function openWorldKeyDown(e) {
+  if (!isOpenWorldMode || !worldEngine) return;
+  // ESC untuk keluar dari open world
+  if (e.code === 'Escape') {
+    stopOpenWorld();
+    e.preventDefault();
+    return;
+  }
+  worldEngine.handleKeyDown(e.code);
+  // Tutup dialogue dengan Space/Enter
+  if ((e.code === 'Space' || e.code === 'Enter') && worldEngine.dialogueBox) {
+    worldEngine.dialogueBox = null;
+    e.preventDefault();
+  }
+}
+
+function openWorldKeyUp(e) {
+  if (!isOpenWorldMode || !worldEngine) return;
+  worldEngine.handleKeyUp(e.code);
+}
+
+function stopOpenWorld() {
+  if (worldEngine) {
+    worldEngine.destroy();
+    worldEngine = null;
+  }
+  isOpenWorldMode = false;
+  window.removeEventListener('keydown', openWorldKeyDown);
+  window.removeEventListener('keyup', openWorldKeyUp);
+  gameContainer.classList.add('hidden');
+  lobby.classList.remove('hidden');
+}
+
+if (openWorldBtn) {
+  openWorldBtn.addEventListener('click', startOpenWorld);
 }
 
 // Tampilkan status hati di lobby (disetelah elemen DOM siap)
