@@ -16,7 +16,7 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Add smooth player movement interpolation.
 
 ## Phase 4: Game Logic & Character Abilities
-- [ ] Implement collision detection, score pickup logic (cucumbers), and player interaction.
+- [x] [DONE] Implement collision detection, score pickup logic (cucumbers), and player interaction.
 - [ ] Add character specific abilities (e.g., Kancil sprint/trickery).
 
 ## Phase 5: Audio, Polish & Moral Story Screen
