@@ -2,16 +2,23 @@
 
 const socket = io();
 
-// DOM elements
+// ---------- DOM ----------
 const lobby = document.getElementById('lobby');
+const waitingRoom = document.getElementById('waitingRoom');
 const gameContainer = document.getElementById('gameContainer');
 const gameOver = document.getElementById('gameOver');
 
 const playerNameInput = document.getElementById('playerName');
 const characterSelect = document.getElementById('characterSelect');
 const roomIdInput = document.getElementById('roomId');
-const joinBtn = document.getElementById('joinBtn');
+const displayRoomId = document.getElementById('displayRoomId');
 const statusMsg = document.getElementById('statusMsg');
+
+const createRoomBtn = document.getElementById('createRoomBtn');
+const joinRoomBtn = document.getElementById('joinRoomBtn');
+const copyRoomIdBtn = document.getElementById('copyRoomIdBtn');
+const startGameBtn = document.getElementById('startGameBtn');
+const playersList = document.getElementById('playersList');
 
 const hudRoom = document.getElementById('hudRoom');
 const hudCharacter = document.getElementById('hudCharacter');
@@ -22,80 +29,157 @@ const finalScores = document.getElementById('finalScores');
 const moralStory = document.getElementById('moralStory');
 const playAgainBtn = document.getElementById('playAgainBtn');
 
-// Game state
+// ---------- State ----------
 let myPlayerId = null;
 let myRoom = null;
 let myCharacter = null;
+let isHost = false;
 
-// Join room
-joinBtn.addEventListener('click', () => {
-  const playerName = playerNameInput.value.trim();
-  const character = characterSelect.value;
-  const roomId = roomIdInput.value.trim();
+// ---------- Helpers ----------
+function showStatus(msg, isError = true) {
+  statusMsg.textContent = msg;
+  statusMsg.className = `text-xs text-center mb-4 ${isError ? 'text-red-400' : 'text-green-400'}`;
+  statusMsg.classList.remove('hidden');
+  setTimeout(() => statusMsg.classList.add('hidden'), 4000);
+}
 
-  if (!playerName || !roomId) {
-    statusMsg.textContent = 'Nama dan Room ID wajib diisi.';
-    statusMsg.classList.remove('hidden');
-    return;
+function renderPlayers(players) {
+  playersList.innerHTML = '';
+  for (const p of players) {
+    const el = document.createElement('div');
+    el.className = `flex justify-between items-center px-3 py-2 rounded bg-gray-800/50 border border-gray-700 ${p.isHost ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`;
+    el.innerHTML = `
+      <span class="text-sm font-medium ${p.isHost ? 'text-yellow-400' : 'text-white'}">${p.name} ${p.isHost ? '(Tuan Rumah)' : ''}</span>
+      <span class="text-xs text-gray-400 capitalize">${p.character}</span>
+    `;
+    playersList.appendChild(el);
   }
+}
 
-  statusMsg.classList.add('hidden');
+// ---------- Socket events ----------
+socket.on('connect', () => {
+  myPlayerId = socket.id;
+});
 
-  socket.emit('joinRoom', { roomId, playerName, character });
-
+socket.on('roomCreated', ({ roomId, isHost: host, roomState }) => {
   myRoom = roomId;
-  myCharacter = character;
+  isHost = host;
+  roomIdInput.value = roomId;
+  displayRoomId.textContent = roomId;
+  displayRoomId.classList.remove('hidden');
 
-  // Switch to game view
-  lobby.classList.add('hidden');
+  showStatus(`Room ${roomId} dibuat. Tunggu pemain lain gabung.`, false);
+  enterWaitingRoom(roomState);
+});
+
+socket.on('roomJoined', ({ roomId, isHost: host, roomState }) => {
+  myRoom = roomId;
+  isHost = host;
+  displayRoomId.textContent = roomId;
+  displayRoomId.classList.remove('hidden');
+
+  showStatus(`Berhasil gabung ke room ${roomId}.`, false);
+  enterWaitingRoom(roomState);
+});
+
+socket.on('roomState', (roomState) => {
+  renderPlayers(roomState.players);
+  startGameBtn.disabled = !isHost || roomState.playerCount < 1;
+});
+
+socket.on('playerLeft', ({ playerId }) => {
+  showStatus('Satu pemain meninggalkan room.');
+});
+
+socket.on('error', ({ message }) => {
+  showStatus(message);
+});
+
+socket.on('gameStarted', ({ roomId }) => {
+  waitingRoom.classList.add('hidden');
   gameContainer.classList.remove('hidden');
 
   hudRoom.textContent = roomId;
-  hudCharacter.textContent = character;
+  hudCharacter.textContent = myCharacter;
 
-  // Start game loop
   initGame();
 });
 
-// Listen for movement updates from server (other players)
 socket.on('playerMoved', (data) => {
-  if (data.playerId === myPlayerId) return; // skip self
+  if (data.playerId === myPlayerId) return;
   updateRemotePlayer(data);
 });
 
-// Listen for ability events
 socket.on('useAbility', (data) => {
   triggerAbilityEffect(data);
 });
 
-// Listen for game over
 socket.on('gameOver', ({ winner, finalScores: scores }) => {
   gameContainer.classList.add('hidden');
-  gameOver.classList.remove('flex');
+  gameOver.classList.remove('hidden');
 
-  let scoreHtml = '<h3 class="text-lg font-bold text-yellow-400 mb-2">Skor Akhir</h3><ul class="text-left list-disc list-inside mb-4">';
+  let html = '<h3 class="text-lg font-bold text-yellow-400 mb-2">Skor Akhir</h3><ul class="text-left list-disc list-inside mb-4">';
   for (const [id, score] of Object.entries(scores)) {
-    scoreHtml += `<li>${id}: ${score}</li>`;
+    html += `<li>${id}: ${score}</li>`;
   }
-  scoreHtml += '</ul>';
-  finalScores.innerHTML = scoreHtml;
+  html += '</ul>';
+  finalScores.innerHTML = html;
 
-  // Traditional moral lesson (piwulang)
   moralStory.textContent =
     '"Kecerdikan lebih berharga dari kekuatan. Jangan simply percaya pada penampilan luar, dan selalu taat pada kebenaran."';
 });
 
-// Init canvas game loop
+// ---------- UI actions ----------
+function enterWaitingRoom(roomState) {
+  waitingRoom.classList.remove('hidden');
+  renderPlayers(roomState.players);
+  startGameBtn.disabled = !isHost;
+}
+
+createRoomBtn.addEventListener('click', () => {
+  const playerName = playerNameInput.value.trim();
+  const character = characterSelect.value;
+  if (!playerName) {
+    showStatus('Nama pemain wajib diisi.');
+    return;
+  }
+  myCharacter = character;
+  socket.emit('createRoom', { playerName, character });
+});
+
+joinRoomBtn.addEventListener('click', () => {
+  const playerName = playerNameInput.value.trim();
+  const character = characterSelect.value;
+  const roomId = roomIdInput.value.trim().toUpperCase();
+  if (!playerName || !roomId) {
+    showStatus('Nama dan Room ID wajib diisi.');
+    return;
+  }
+  myCharacter = character;
+  socket.emit('joinRoom', { roomId, playerName, character });
+});
+
+copyRoomIdBtn.addEventListener('click', () => {
+  if (!roomIdInput.value) return;
+  roomIdInput.select();
+  document.execCommand('copy');
+  showStatus('Room ID disalin.', false);
+});
+
+startGameBtn.addEventListener('click', () => {
+  if (!isHost) return;
+  socket.emit('startGame');
+});
+
+// ---------- Game loop (Phase 2 placeholder; full engine in Phase 3) ----------
 function initGame() {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
-
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  // Simple player state
   const player = {
-    id: myPlayerId || socket.id,
+    id: myPlayerId,
     name: playerNameInput.value.trim(),
     character: myCharacter,
     x: canvas.width / 2,
@@ -104,15 +188,10 @@ function initGame() {
     actionState: 'idle',
   };
 
-  // Notify server of our id
-  myPlayerId = player.id;
-
-  // Input handling
   const keys = {};
   window.addEventListener('keydown', (e) => { keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-  // Send movement to server at ~30 FPS
   setInterval(() => {
     let dx = 0, dy = 0;
     if (keys['ArrowLeft'] || keys['KeyA']) { dx = -4; player.direction = 'left'; }
@@ -124,7 +203,6 @@ function initGame() {
     player.y += dy;
     player.actionState = (dx !== 0 || dy !== 0) ? 'moving' : 'idle';
 
-    // Clamp to canvas
     player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
     player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
 
@@ -147,32 +225,28 @@ function initGame() {
 function draw(player, ctx) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  // Simple silhouette (rectangle = placeholder until puppet assets added)
   const size = 40;
   ctx.save();
   ctx.translate(player.x, player.y);
   if (player.direction === 'left') ctx.scale(-1, 1);
-  ctx.fillStyle = '#1a1a1a'; // Wayang shadow color
+  ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(-size / 2, -size / 2, size, size);
   ctx.restore();
 
-  // Name label
   ctx.fillStyle = '#fff';
   ctx.font = '14px monospace';
   ctx.textAlign = 'center';
   ctx.fillText(player.name, player.x, player.y - size / 2 - 8);
 
-  // Score / timer HUD update (mock)
   hudScore.textContent = Math.floor(player.x / 10);
 }
 
 function updateRemotePlayer(data) {
-  // Remote player rendering will be handled by gameEngine.js
-  // Placeholder for now
+  // Remote player rendering handled fully in Phase 3 gameEngine.js
 }
 
 function triggerAbilityEffect(data) {
-  // Placeholder for ability effects
+  // Placeholder for ability effects (Phase 4)
 }
 
 playAgainBtn.addEventListener('click', () => {
