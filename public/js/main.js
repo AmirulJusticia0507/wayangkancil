@@ -48,6 +48,11 @@ const hudTimer = document.getElementById('hudTimer');
 const leaderboard = document.getElementById('leaderboard');
 const leaderboardList = document.getElementById('leaderboardList');
 
+const hudSeason = document.getElementById('hudSeason');
+const hudSeasonLabel = document.getElementById('hudSeasonLabel');
+
+let currentSeason = null; // { id, label, itemTypes, ... }
+
 const finalScores = document.getElementById('finalScores');
 const moralStory = document.getElementById('moralStory');
 const playAgainBtn = document.getElementById('playAgainBtn');
@@ -840,10 +845,18 @@ function startGameAfterNarrative() {
   initGameEngine(myRoom);
 }
 
-socket.on('gameStateUpdate', ({ players, scores, timer }) => {
+socket.on('gameStateUpdate', ({ players, scores, season, seasonInfo, timer }) => {
   if (!engine) return;
 
   hudTimer.textContent = timer;
+
+  // Update musim saat ini (Phase 8.7)
+  if (seasonInfo && season !== currentSeason?.id) {
+    currentSeason = { id: season, ...seasonInfo };
+    hudSeason.classList.remove('hidden');
+    hudSeasonLabel.textContent = `${currentSeason.icon} ${currentSeason.label}`;
+    if (engine) engine.setItemType(currentSeason.itemTypes[0]);
+  }
 
   // Render leaderboard skor multiplayer (Phase 8.2)
   renderLeaderboard(scores);
@@ -908,10 +921,12 @@ socket.on('itemCollected', ({ playerId, playerName, itemId, score }) => {
   // Hapus item dari semua client
   engine.items = engine.items.filter((i) => i.id !== itemId);
 
-  // Re-spawn jika terlalu sedikit
+  // Re-spawn jika terlalu sedikit (mengikuti jenis item musim)
   const active = engine.items.filter((i) => !i.collected).length;
+  const seasonItemType = currentSeason ? currentSeason.itemTypes[0] : 'cucumber';
   while (active < 4) {
-    engine.spawnItems(1);
+    engine.spawnItems(1, seasonItemType);
+    active++;
   }
 
   // Update skor pemain yang mengambil
@@ -1020,12 +1035,13 @@ function initGameEngine(roomId) {
   });
 
   // Item mock (timun) akan di-generate sepenuhnya di Phase 4
-  engine.spawnMockItems(8);
+  const initialItemType = currentSeason ? currentSeason.itemTypes[0] : 'cucumber';
+  engine.spawnMockItems(8, initialItemType);
 
   // Bonus item awal dari hasil panen kebun (Phase 8.6)
   const farmBonus = getFarmHarvestBonus();
   if (farmBonus > 0) {
-    engine.spawnItems(farmBonus);
+    engine.spawnItems(farmBonus, initialItemType);
     showStatus(`Bonus dari kebun: +${farmBonus} item awal`, false);
   }
 

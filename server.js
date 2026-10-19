@@ -28,6 +28,55 @@ app.get('/', (req, res) => {
 // rooms: Map<roomId, { players: Map<socket.id, playerData>, createdAt, episodeId, votes }>
 const rooms = new Map();
 
+// ---------- Sistem Musim (Phase 8.7) ----------
+const SEASONS = {
+  hujan: {
+    label: 'Musim Hujan',
+    itemTypes: ['cucumber', 'mushroom'],
+    spawnRateMultiplier: 1.2,
+    itemValueMultiplier: 1.0,
+    bgColor: '#1a2e2a',
+    icon: '🌧️',
+  },
+  kemarau: {
+    label: 'Musim Kemarau',
+    itemTypes: ['cactus', 'berry'],
+    spawnRateMultiplier: 0.8,
+    itemValueMultiplier: 1.3,
+    bgColor: '#5d4037',
+    icon: '☀️',
+  },
+  panas: {
+    label: 'Musim Panas',
+    itemTypes: ['cucumber', 'melon'],
+    spawnRateMultiplier: 1.0,
+    itemValueMultiplier: 1.1,
+    bgColor: '#4a2e18',
+    icon: '🔥',
+  },
+  transition: {
+    label: 'Pancaroba',
+    itemTypes: ['cucumber', 'leaf'],
+    spawnRateMultiplier: 0.9,
+    itemValueMultiplier: 0.9,
+    bgColor: '#3a4a2a',
+    icon: '🍃',
+  },
+};
+
+function getSeasonForRoom(room) {
+  // Musim bergantian setiap 5 menit berdasarkan waktu pembuatan room
+  const cycleMinutes = 5;
+  const elapsedMinutes = (Date.now() - room.createdAt) / (1000 * 60);
+  const cycleIndex = Math.floor(elapsedMinutes / cycleMinutes) % 4;
+  const keys = Object.keys(SEASONS);
+  return keys[cycleIndex];
+}
+
+function getSeasonInfo(seasonId) {
+  return SEASONS[seasonId] || SEASONS.transition;
+}
+
 function generateRoomId() {
   return 'KNC' + Math.floor(1000 + Math.random() * 9000);
 }
@@ -321,9 +370,14 @@ const gameStateInterval = setInterval(() => {
       };
     }
 
+    const seasonId = getSeasonForRoom(room);
+    const seasonInfo = getSeasonInfo(seasonId);
+
     io.to(roomId).emit('gameStateUpdate', {
       players,
       scores,
+      season: seasonId,
+      seasonInfo,
       timer: Math.floor((Date.now() - room.createdAt) / 1000),
     });
   }

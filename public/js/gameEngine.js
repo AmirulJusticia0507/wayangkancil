@@ -1,6 +1,16 @@
 // Wayang Kancil - Canvas renderer & game loop (Phase 3)
 // Estetika wayang kulit: latar parchment Kelir, siluet hitam, drop shadow Blencong.
 
+// Gaya item berdasarkan jenis (dipengaruhi oleh musim, Phase 8.7)
+const ITEM_STYLES = {
+  cucumber: { color: '#c0a000', highlight: '#e8d040' },
+  mushroom: { color: '#9333ea', highlight: '#c084fc' },
+  cactus:   { color: '#22c55e', highlight: '#4ade80' },
+  berry:    { color: '#ef4444', highlight: '#fca5a5' },
+  melon:    { color: '#10b981', highlight: '#34d399' },
+  leaf:     { color: '#84cc16', highlight: '#a3e635' },
+};
+
 export default class GameEngine {
   constructor(canvas) {
     this.canvas = canvas;
@@ -12,6 +22,7 @@ export default class GameEngine {
     this.effects = [];             // { type, x, y, ttl, maxTtl } (ability visual effects)
     this.roomId = null;
     this.parallaxOffset = 0; // untuk gerakan latar parallax
+    this.defaultItemType = 'cucumber'; // jenis item default, diatur oleh musim (Phase 8.7)
 
     // Loop
     this.lastTime = 0;
@@ -34,6 +45,10 @@ export default class GameEngine {
 
   setRoom(roomId) {
     this.roomId = roomId;
+  }
+
+  setItemType(itemType) {
+    this.defaultItemType = itemType;
   }
 
   addPlayer(id, { name, character, x, y }) {
@@ -291,16 +306,29 @@ export default class GameEngine {
   }
 
   drawItems(ctx) {
-    ctx.fillStyle = '#c0a000';
     for (const item of this.items) {
+      const type = item.type || 'cucumber';
+      // Warna & bentuk bervariasi berdasarkan jenis item & musim (Phase 8.7)
+      const style = ITEM_STYLES[type] || ITEM_STYLES.cucumber;
+
+      ctx.fillStyle = style.color;
       ctx.beginPath();
-      ctx.arc(item.x, item.y, 8, 0, Math.PI * 2);
+      if (type === 'cactus' || type === 'berry') {
+        ctx.rect(item.x - 6, item.y - 6, 12, 12);
+      } else if (type === 'leaf') {
+        ctx.ellipse(item.x, item.y, 7, 9, Math.PI / 4, 0, Math.PI * 2);
+      } else if (type === 'mushroom') {
+        ctx.arc(item.x, item.y, 7, 0, Math.PI * 2);
+      } else {
+        ctx.arc(item.x, item.y, 8, 0, Math.PI * 2);
+      }
       ctx.fill();
-      ctx.fillStyle = '#e8d040';
+
+      // Highlight kecil di atas item
+      ctx.fillStyle = style.highlight;
       ctx.beginPath();
-      ctx.arc(item.x, item.y - 4, 4, 0, Math.PI * 2);
+      ctx.arc(item.x - 2, item.y - 2, 3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#c0a000';
     }
   }
 
@@ -472,7 +500,7 @@ export default class GameEngine {
   }
 
   // ---------- Items (cucumber / timun) ----------
-  spawnItems(count = 8) {
+  spawnItems(count = 8, itemType = 'cucumber') {
     this.items = [];
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -481,7 +509,7 @@ export default class GameEngine {
         id: `item-${Date.now()}-${i}`,
         x: 100 + Math.random() * (w - 200),
         y: 100 + Math.random() * (h - 200),
-        type: 'cucumber',
+        type: itemType,
         collected: false,
       });
     }
@@ -508,9 +536,9 @@ export default class GameEngine {
     // Bersihkan item yang sudah diambil
     this.items = this.items.filter((i) => !i.collected);
 
-    // Re-spawn agar jumlah item aktif tetap minimal 4
+    // Re-spawn agar jumlah item aktif tetap minimal 4 (mengikuti jenis item musim)
     while (this.items.filter((i) => !i.collected).length < 4) {
-      this.spawnItems(1);
+      this.spawnItems(1, this.defaultItemType);
     }
 
     return collected;
