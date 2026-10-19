@@ -56,9 +56,40 @@ export default class GameEngine {
     };
     for (const [name, src] of Object.entries(sources)) {
       const img = new Image();
-      img.onload = () => { this.puppetImages[name] = img; };
+      img.onload = () => {
+        // Proses gambar: buat latar putih/transparan agar tanpa bayangan (Phase 8.11)
+        const processed = this.removeWhiteBackground(img);
+        this.puppetImages[name] = processed || img;
+      };
       img.onerror = () => { console.warn('Gagal load gambar wayang:', name, src); };
       img.src = src;
+    }
+  }
+
+  // Hapus latar putih dari gambar (membuat transparan)
+  removeWhiteBackground(img) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        // Jika pixel mendekati putih, buat transparan
+        if (r > 230 && g > 230 && b > 230) {
+          data[i + 3] = 0; // alpha = 0
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      const newImg = new Image();
+      newImg.src = canvas.toDataURL('image/png');
+      return newImg;
+    } catch (e) {
+      console.warn('Gagal proses background:', e);
+      return null;
     }
   }
 
@@ -177,7 +208,25 @@ export default class GameEngine {
       ctx.translate(p.x, p.y);
       if (p.direction === 'left') ctx.scale(-1, 1);
 
+      // Animasi: gerakan napas (breathing), ayunan (sway) & bobbing agar bisa digerakkan
+      const t = Math.sin(now * 0.004);
+      const moving = p.actionState === 'moving';
+      const breathScale = 1 + (moving ? t * 0.05 : t * 0.025);
+      const swayAngle = moving ? t * 0.12 : t * 0.04;
+      const bobY = moving ? Math.abs(t) * 4 : 0;
+      ctx.translate(0, bobY);
+      ctx.rotate(swayAngle);
+      ctx.scale(breathScale, breathScale);
+
       const size = p.character === 'kancil' ? 64 : 80;
+
+      // Tanpa bayangan: reset shadow sebelum menggambar
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Gambar langsung (tanpa blend mode agar warna asli terlihat)
       ctx.drawImage(img, -size / 2, -size, size, size);
 
       // Nama pemain di bawah gambar
