@@ -35,6 +35,12 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Add story progress tracking (localStorage).
 - [x] [DONE] Implement multiplayer story voting (Dalang mode).
 
+## Phase 8: v3 — Roadmap Lanjutan
+- [ ] PWA offline/installable & performan canvas.
+- [ ] Leaderboard skor multiplayer real-time.
+- [ ] Karakter & lakon wayang tambahan.
+- [ ] Animasi wayang kulit & transisi scene.
+
 ## Aturan Wajib
 Setiap checklist di atas yang sudah selesai dikerjakan:
 

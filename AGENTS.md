@@ -79,6 +79,7 @@ Jangan melakukan commit kosong. Pastikan ada perubahan file yang nyata sebelum c
 ## 🧠 Catatan untuk Agen
 
 - Selalu baca `wayang_kancil_game_spec.md` sebelum mengubah fitur agar selaras dengan roadmap dan spesifikasi.
+- Roadmap v3 lihat `TODO.md` Phase 8 (jangan duplikasi daftar checklist di sini).
 - Jika terdapat keraguan tentang arah implementasi, tanyakan kepada pengguna sebelum melanjutkan.
 - Prioritaskan konsistensi estetika wayang kulit (siluet, latar bayangan *Kelir*, cahaya *Blencong*, bunyi Gamelan).
 
