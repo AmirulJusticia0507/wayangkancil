@@ -223,10 +223,11 @@ if (themeToggleBtn) {
 
 // ---------- Cerita Sendiri / Solo Story Mode (tambahan) ----------
 function startSoloStory(episodeId) {
-  const playerName = playerNameInput.value.trim();
+  let playerName = playerNameInput.value.trim();
+  // Auto-fill nama jika kosong agar tombol langsung berfungsi
   if (!playerName) {
-    showStatus('Nama pemain wajib diisi.');
-    return;
+    playerName = 'Pemain';
+    playerNameInput.value = playerName;
   }
 
   myCharacter = characterSelect.value;
@@ -274,8 +275,16 @@ function playNextSoloEpisode() {
   if (ep) showStatus(`Memulai cerita: ${ep.title} (${soloStoryIndex}/${soloStoryQueue.length})`, false);
 }
 
-if (storyModeBtn) {
-  storyModeBtn.addEventListener('click', () => startSoloStory(episodeSelect.value || null));
+// Attach event listener
+const btn = document.getElementById('storyModeBtn');
+if (btn) {
+  btn.addEventListener('click', () => {
+    try {
+      startSoloStory(episodeSelect.value || null);
+    } catch (e) {
+      console.error('Error in startSoloStory:', e);
+    }
+  });
 }
 
 // Tampilkan status hati di lobby (disetelah elemen DOM siap)
