@@ -34,6 +34,14 @@ export class NarrativeEngine {
     this.renderScene(this.sceneIndex);
   }
 
+  // Pemetaan label puppet ke gambar PNG (Phase 8.12)
+  puppetImageSrc(label = '') {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('kancil')) return '/assets/puppets/kancil.png';
+    if (normalized.includes('buaya')) return '/assets/puppets/buaya.png';
+    return null;
+  }
+
   renderScene(index) {
     if (!this.container) return;
     if (index < 0 || index >= this.scenes.length) {
@@ -67,7 +75,11 @@ export class NarrativeEngine {
     if (scene.puppets && scene.puppets.length > 0) {
       html += '<div class="narrative-puppets">';
       for (const [puppetIndex, puppet] of scene.puppets.entries()) {
-        html += `<div class="narrative-puppet ${puppet.flip ? 'is-flipped' : ''}" style="--puppet-x:${puppet.x}%; --puppet-delay:${puppetIndex * 120}ms"><div class="puppet-shadow"></div><div class="puppet-silhouette ${this.puppetClass(puppet.label)}"><i></i><b></b></div><div class="puppet-label"><span></span>${this.escapeHtml(puppet.label)}</div></div>`;
+        const imgSrc = this.puppetImageSrc(puppet.label);
+        const puppetBody = imgSrc
+          ? `<img src="${imgSrc}" alt="${this.escapeHtml(puppet.label)}" class="narrative-puppet-img" />`
+          : `<div class="puppet-silhouette ${this.puppetClass(puppet.label)}"><i></i><b></b></div>`;
+        html += `<div class="narrative-puppet ${puppet.flip ? 'is-flipped' : ''}" style="--puppet-x:${puppet.x}%; --puppet-delay:${puppetIndex * 120}ms"><div class="puppet-shadow"></div>${puppetBody}<div class="puppet-label"><span></span>${this.escapeHtml(puppet.label)}</div></div>`;
       }
       html += '</div>';
     }

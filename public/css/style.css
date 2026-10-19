@@ -758,8 +758,10 @@ body.theme-light #farmMsg {
 .narrative-puppets { position:absolute; z-index:3; inset:92px 40% 0 0; width:auto; height:auto; margin:0; display:block; }
 .narrative-puppet { --scale:1; position:absolute; left:var(--puppet-x); bottom:16%; width:180px; height:300px; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; transform:translateX(-50%) scale(var(--scale)); animation:puppet-arrive .8s cubic-bezier(.2,.8,.2,1) var(--puppet-delay) both; }
 .narrative-puppet.is-flipped .puppet-silhouette { transform:scaleX(-1); }
+.narrative-puppet.is-flipped .narrative-puppet-img { transform:scaleX(-1); }
 .puppet-shadow { position:absolute; bottom:19px; width:130px; height:18px; border-radius:50%; background:#000; filter:blur(10px); opacity:.65; }
 .puppet-silhouette { position:relative; width:118px; height:220px; border-radius:0; background:none; box-shadow:none; filter:drop-shadow(0 18px 16px rgba(0,0,0,.6)); transform-origin:bottom; animation:puppet-breathe 4s ease-in-out infinite; }
+.narrative-puppet-img { position:relative; width:140px; height:180px; object-fit:contain; filter:drop-shadow(0 18px 16px rgba(0,0,0,.6)); transform-origin:bottom; animation:puppet-breathe 4s ease-in-out infinite; pointer-events:none; }
 .puppet-silhouette::before,.puppet-silhouette::after,.puppet-silhouette i,.puppet-silhouette b { content:''; position:absolute; display:block; background:#0a0907; border:2px solid color-mix(in srgb,var(--accent) 68%,#342215); }
 .puppet-silhouette::before { left:35px; bottom:28px; width:58px; height:122px; border-radius:45% 55% 18% 24%; transform:skewY(-5deg); }
 .puppet-silhouette::after { left:50px; top:5px; width:65px; height:72px; border-radius:55% 45% 50% 42%; }
