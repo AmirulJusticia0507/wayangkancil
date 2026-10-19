@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v2-scenes';
+const CACHE_NAME = 'wayang-kancil-v3-pwa';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -18,6 +18,8 @@ const APP_SHELL = [
   '/js/pwa-register.js'
 ];
 
+// Cache-first untuk aset statis (APP_SHELL), network-first untuk navigasi,
+// selalu fallback ke offline.html saat tidak ada jaringan.
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
   self.skipWaiting();
@@ -35,8 +37,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Hindari Socket.io (real-time) dari SW
   if (request.method !== 'GET' || url.pathname.startsWith('/socket.io/')) return;
 
+  // Navigasi (HTML): network-first, fallback cache/offline
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -50,6 +54,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Aset statis: cache-first, fallback network
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;

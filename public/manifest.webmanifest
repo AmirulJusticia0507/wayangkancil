@@ -31,5 +31,21 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mulai Buruan",
+      "short_name": "Buruan",
+      "description": "Mulai mode buruan multiplayer tanpa cerita",
+      "url": "/?mode=chase",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pilih Cerita",
+      "short_name": "Cerita",
+      "description": "Buka mode lakon cerita wayang (Dalang)",
+      "url": "/?mode=story",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }
