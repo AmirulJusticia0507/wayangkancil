@@ -119,6 +119,18 @@
             🌓 Mode Gelap
           </button>
         </div>
+
+        <!-- AI Configuration (opsional) -->
+        <div class="mt-4 p-3 bg-black/40 border border-cyan-500/20 rounded-xl text-center">
+          <div class="text-xs text-cyan-400 font-bold font-mono mb-2 uppercase">Konfigurasi AI (Opsional)</div>
+          <div class="flex gap-2">
+            <input type="password" id="apiKeyInput" placeholder="Masukkan API key..." class="flex-1 lobby-input text-xs" />
+            <button id="saveApiKeyBtn" class="btn-secondary-cinematic px-3 py-2 text-xs min-w-[70px]">
+              Simpan
+            </button>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-1">Base URL: https://ai.xemarux.com/v1 | Model: deepseek-v4.1-flash (gratis)</p>
+        </div>
       </div>
 
       <p class="lobby-caption mt-8">
