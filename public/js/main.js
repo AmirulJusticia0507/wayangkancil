@@ -14,6 +14,12 @@ const gameContainer = document.getElementById('gameContainer');
 const gameOver = document.getElementById('gameOver');
 const narrativeScene = document.getElementById('narrativeScene');
 const narrativeContainer = document.getElementById('narrativeContainer');
+const piwulangScreen = document.getElementById('piwulangScreen');
+const piwulangTitle = document.getElementById('piwulangTitle');
+const piwulangStory = document.getElementById('piwulangStory');
+const piwulangMoral = document.getElementById('piwulangMoral');
+const piwulangEnding = document.getElementById('piwulangEnding');
+const piwulangStartBtn = document.getElementById('piwulangStartBtn');
 
 const playerNameInput = document.getElementById('playerName');
 const characterSelect = document.getElementById('characterSelect');
@@ -166,9 +172,7 @@ function startNarrative(episodeId) {
 
   narrative.loadScenes(scenes);
   narrative.onComplete = () => {
-    narrativeScene.classList.add('hidden');
-    gameContainer.classList.remove('hidden');
-    initGameEngine(myRoom);
+    showPiwulangScreen(ep);
   };
   narrative.start(0);
 }
@@ -254,6 +258,32 @@ function buildNarrativeScenes(ep) {
 
   return scenes;
 }
+
+// ---------- Piwulang Screen (Phase 7.1) ----------
+function showPiwulangScreen(ep) {
+  narrativeScene.classList.add('hidden');
+  piwulangScreen.classList.remove('hidden');
+
+  piwulangTitle.textContent = `Piwulang — ${ep.title}`;
+  piwulangStory.textContent = ep.story;
+  piwulangMoral.textContent = ep.moral;
+
+  // Ringkasan akhir berdasarkan episode
+  const summaries = {
+    'ep-1': 'Kancil berhasil menyeberangi sungai dengan membohongi para buaya. Buah-buahan di seberang tercapai melalui kecerdikan, bukan kekerasan.',
+    'ep-2': 'Kancil mengakali Harimau dua kali dengan ilusi gong dan sabuk palsu. Penampilan boleh menipu, tetapi akal menyelamatkan.',
+    'ep-3': 'Kancil kalah dari Siput dalam lomba lari. Kecepatan sendirian tidak cukup — kerja sama dan strategi lebih kuat.',
+    'ep-4': 'Kancil menjadi hakim dan membalas kebaikan Kerbau dengan menindih Serigala yang tidak berterima kasih. Pilih siapa yang dipercaya.',
+    'ep-5': 'Kancil menyelesaikan sengketa Harimau dan Gajah melalui dialog damai. Tanpa pertumpahan darah, hutan tetap harmonis.',
+  };
+  piwulangEnding.textContent = summaries[ep.id] || 'Cerita selesai. Akal adalah senjata terampuh.';
+}
+
+piwulangStartBtn.addEventListener('click', () => {
+  piwulangScreen.classList.add('hidden');
+  gameContainer.classList.remove('hidden');
+  initGameEngine(myRoom);
+});
 
 function startGameAfterNarrative() {
   narrativeScene.classList.add('hidden');
