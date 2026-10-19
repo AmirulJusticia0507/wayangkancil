@@ -361,6 +361,28 @@ function startOpenWorld() {
     startNarrative(npc.episodeId);
   };
 
+  // Callback ketika challenge disetujui (modal approve)
+  worldEngine.onChallengeApprove = (challenge) => {
+    // Pause world engine
+    if (worldEngine) worldEngine.stop();
+    window.removeEventListener('keydown', openWorldKeyDown);
+    window.removeEventListener('keyup', openWorldKeyUp);
+
+    // Sembunyikan canvas, tampilkan narrative
+    gameContainer.classList.add('hidden');
+    const menuBtn = document.getElementById('worldMenuBtn');
+    if (menuBtn) menuBtn.style.display = 'none';
+    narrativeScene.classList.remove('hidden');
+
+    // Mulai narrative untuk episode challenge ini
+    myEpisode = challenge.episodeId;
+    isSoloMode = true;
+    soloStoryQueue = [challenge.episodeId];
+    soloStoryIndex = 0;
+    playerChoices = [];
+    startNarrative(challenge.episodeId);
+  };
+
   worldEngine.start();
 
   // Input keyboard untuk open world
@@ -374,8 +396,24 @@ function openWorldKeyDown(e) {
   if (!isOpenWorldMode || !worldEngine) return;
   // ESC untuk keluar dari open world
   if (e.code === 'Escape') {
-    stopOpenWorld();
+    if (worldEngine.modalBox) {
+      worldEngine.cancelChallenge();
+    } else {
+      stopOpenWorld();
+    }
     e.preventDefault();
+    return;
+  }
+  // Jika modal sedang tampil, handle approve/cancel dengan Enter/Space
+  if (worldEngine.modalBox) {
+    if (e.code === 'Enter' || e.code === 'Space') {
+      // Default: approve (Enter = lanjutkan)
+      const challenge = worldEngine.approveChallenge();
+      if (challenge && worldEngine.onChallengeApprove) {
+        worldEngine.onChallengeApprove(challenge);
+      }
+      e.preventDefault();
+    }
     return;
   }
   worldEngine.handleKeyDown(e.code);
@@ -1150,6 +1188,13 @@ piwulangStartBtn.addEventListener('click', () => {
     const menuBtn = document.getElementById('worldMenuBtn');
     if (menuBtn) menuBtn.style.display = '';
     if (worldEngine) {
+      // Tandai challenge sebagai selesai (buka jalan terkunci)
+      if (myEpisode) {
+        const challenge = worldEngine.challenges.find((c) => c.episodeId === myEpisode);
+        if (challenge) {
+          worldEngine.completeChallenge(challenge.id);
+        }
+      }
       worldEngine.start();
       window.addEventListener('keydown', openWorldKeyDown);
       window.addEventListener('keyup', openWorldKeyUp);

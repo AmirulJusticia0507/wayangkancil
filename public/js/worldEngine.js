@@ -1,6 +1,6 @@
 // Wayang Kancil - Open World Engine (Harvest Moon style)
-// Peta dunia, gerakan pemain, NPC, kebun, siklus siang/malam
-// Icon gambar asli + rumput 3D + tombol menu
+// Peta dunia, gerakan pemain, NPC bergerak bebas, kebun, siklus siang/malam
+// Icon gambar asli + rumput 3D + tombol menu + modal konfirmasi tantangan
 
 // Tile types
 const TILE = {
@@ -13,9 +13,10 @@ const TILE = {
   FARM: 6,
   HOUSE: 7,
   NPC_SPOT: 8,
+  CHALLENGE: 9, // zona tantangan
+  LOCKED: 10,   // jalan terkunci (belum lolos tantangan)
 };
 
-// Ukuran tile
 const TILE_SIZE = 48;
 
 export default class WorldEngine {
@@ -23,63 +24,51 @@ export default class WorldEngine {
     this.canvas = canvas;
     this.ctx = ctx;
     this.tileSize = TILE_SIZE;
-    this.onNpcTalk = null; // callback when talking to NPC
 
-    // Peta dunia (2D array)
     this.map = [];
     this.mapWidth = 0;
     this.mapHeight = 0;
 
-    // Pemain
     this.player = {
-      x: 0,
-      y: 0,
-      speed: 3,
-      direction: 'down',
-      isMoving: false,
-      frame: 0,
-      frameTimer: 0,
+      x: 0, y: 0, speed: 3, direction: 'down',
+      isMoving: false, frame: 0, frameTimer: 0,
     };
 
-    // Kamera
     this.camera = { x: 0, y: 0 };
     this.zoom = 1.0;
     this.minZoom = 0.5;
     this.maxZoom = 2.0;
 
-    // Drag state
     this.isDragging = false;
     this.dragStart = { x: 0, y: 0 };
     this.cameraStart = { x: 0, y: 0 };
 
-    // NPC
     this.npcs = [];
-
-    // Kebun (plots di dunia)
     this.farmPlots = [];
 
-    // Siklus siang/malam
     this.timeOfDay = 0.25;
     this.daySpeed = 0.00005;
 
-    // Interaksi
     this.nearbyNpc = null;
+    this.nearbyChallenge = null;
     this.dialogueBox = null;
+    this.modalBox = null; // modal konfirmasi tantangan
     this.inventory = { timun: 0, hati: 0 };
 
-    // Input
     this.keys = {};
-
-    // Loop
     this.lastTime = 0;
     this.animId = null;
 
-    // Gambar wayang (PNG asli)
     this.puppetImages = {};
     this.loadPuppetImages();
 
-    // Menu button area
     this.menuButton = { x: 0, y: 0, w: 120, h: 36 };
+    this.onMenuClick = null;
+    this.onNpcTalk = null;
+    this.onChallengeApprove = null;
+    this.onChallengeCancel = null;
+
+    this.completedChallenges = new Set();
 
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
@@ -90,7 +79,6 @@ export default class WorldEngine {
     window.addEventListener('resize', this.resize);
     this.resize();
 
-    // Mouse drag & zoom
     this.canvas.addEventListener('mousedown', this.handleMouseDown);
     this.canvas.addEventListener('mousemove', this.handleMouseMove);
     this.canvas.addEventListener('mouseup', this.handleMouseUp);
@@ -137,9 +125,7 @@ export default class WorldEngine {
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i], g = data[i + 1], b = data[i + 2];
-        if (r > 230 && g > 230 && b > 230) {
-          data[i + 3] = 0;
-        }
+        if (r > 230 && g > 230 && b > 230) data[i + 3] = 0;
       }
       ctx.putImageData(imageData, 0, 0);
       const newImg = new Image();
@@ -153,7 +139,7 @@ export default class WorldEngine {
 
   // ---------- Setup peta ----------
   createDefaultMap() {
-    const w = 50, h = 35;
+    const w = 60, h = 40;
     this.mapWidth = w;
     this.mapHeight = h;
     this.map = [];
@@ -162,44 +148,92 @@ export default class WorldEngine {
       for (let x = 0; x < w; x++) {
         let tile = 0; // grass
         if (x === 0 || y === 0 || x === w - 1 || y === h - 1) tile = 4; // tree border
-        // Water pond
-        if (x >= 20 && x <= 26 && y >= 14 && y <= 19) tile = 2;
+        // Water pond (kolam)
+        if (x >= 25 && x <= 32 && y >= 18 && y <= 24) tile = 2;
         // Path
-        if (y === 20 && x >= 5 && x <= 45) tile = 3;
-        if (x === 25 && y >= 20 && y <= 32) tile = 3;
+        if (y === 28 && x >= 5 && x <= 55) tile = 3;
+        if (x === 30 && y >= 28 && y <= 38) tile = 3;
+        if (x === 15 && y >= 5 && y <= 28) tile = 3;
+        if (x === 45 && y >= 5 && y <= 28) tile = 3;
         // Farm area
-        if (x >= 3 && x <= 10 && y >= 3 && y <= 10) tile = 6;
+        if (x >= 3 && x <= 12 && y >= 3 && y <= 12) tile = 6;
         // House
-        if (x >= 38 && x <= 42 && y >= 3 && y <= 7) tile = 7;
-        // NPC spots
-        if (x === 25 && y === 12) tile = 8;
-        if (x === 8 && y === 18) tile = 8;
-        if (x === 40 && y === 18) tile = 8;
+        if (x >= 48 && x <= 52 && y >= 3 && y <= 7) tile = 7;
+        // Challenge zones (zona tantangan)
+        if (x >= 24 && x <= 27 && y >= 15 && y <= 17) tile = 9; // tantangan buaya (kolam)
+        if (x >= 38 && x <= 42 && y >= 15 && y <= 17) tile = 9; // tantangan macan
+        if (x >= 10 && x <= 14 && y >= 20 && y <= 22) tile = 9; // tantangan siput
+        // Locked paths (jalan terkunci)
+        if (x >= 28 && x <= 32 && y >= 10 && y <= 14) tile = 10; // jalan ke area berikutnya (terkunci sampai lolos tantangan)
         row.push(tile);
       }
       this.map.push(row);
     }
 
-    this.player.x = 25 * TILE_SIZE + TILE_SIZE / 2;
-    this.player.y = 22 * TILE_SIZE + TILE_SIZE / 2;
+    this.player.x = 30 * TILE_SIZE + TILE_SIZE / 2;
+    this.player.y = 30 * TILE_SIZE + TILE_SIZE / 2;
 
+    // NPC dengan area patrol (bergerak bebas dalam area)
     this.npcs = [
-      { id: 'kancil', name: 'Si Kancil', x: 25 * TILE_SIZE + TILE_SIZE / 2, y: 12 * TILE_SIZE + TILE_SIZE / 2, color: '#fbbf24', image: 'kancil', dialogue: 'Halo! Aku Si Kancil. Mau bermain?', episodeId: null },
-      { id: 'pak-tani', name: 'Pak Tani', x: 8 * TILE_SIZE + TILE_SIZE / 2, y: 18 * TILE_SIZE + TILE_SIZE / 2, color: '#22c55e', image: 'pak-tani', dialogue: 'Selamat datang di kebunku! Tanam timun di sini.', episodeId: null },
-      { id: 'macan', name: 'Macan', x: 40 * TILE_SIZE + TILE_SIZE / 2, y: 18 * TILE_SIZE + TILE_SIZE / 2, color: '#ef4444', image: 'macan', dialogue: 'Grrr... Jangan ganggu aku!', episodeId: 'ep-2' },
-      { id: 'buaya', name: 'Buaya', x: 22 * TILE_SIZE + TILE_SIZE / 2, y: 16 * TILE_SIZE + TILE_SIZE / 2, color: '#10b981', image: 'buaya', dialogue: 'Hati-hati di sungai! Aku bukan musuh.', episodeId: 'ep-1' },
+      {
+        id: 'kancil', name: 'Si Kancil',
+        x: 30 * TILE_SIZE + TILE_SIZE / 2, y: 28 * TILE_SIZE + TILE_SIZE / 2,
+        color: '#fbbf24', image: 'kancil', dialogue: 'Halo! Aku Si Kancil.',
+        patrol: { x1: 28, y1: 26, x2: 32, y2: 30 }, // area patrol
+        vx: 1, vy: 0, // kecepatan patrol
+        episodeId: null,
+      },
+      {
+        id: 'pak-tani', name: 'Pak Tani',
+        x: 8 * TILE_SIZE + TILE_SIZE / 2, y: 8 * TILE_SIZE + TILE_SIZE / 2,
+        color: '#22c55e', image: 'pak-tani', dialogue: 'Selamat datang di kebunku! Tanam timun di sini.',
+        patrol: { x1: 3, y1: 3, x2: 12, y2: 12 },
+        vx: 0.5, vy: 0.5,
+        episodeId: null,
+      },
+      {
+        id: 'macan', name: 'Macan',
+        x: 40 * TILE_SIZE + TILE_SIZE / 2, y: 16 * TILE_SIZE + TILE_SIZE / 2,
+        color: '#ef4444', image: 'macan', dialogue: 'Grrr... Jangan ganggu aku!',
+        patrol: { x1: 38, y1: 14, x2: 44, y2: 20 },
+        vx: -0.8, vy: 0.3,
+        episodeId: 'ep-2',
+      },
+      {
+        id: 'buaya', name: 'Buaya',
+        x: 28 * TILE_SIZE + TILE_SIZE / 2, y: 20 * TILE_SIZE + TILE_SIZE / 2,
+        color: '#10b981', image: 'buaya', dialogue: 'Hati-hati di sungai! Aku bukan musuh.',
+        patrol: { x1: 24, y1: 18, x2: 32, y2: 24 },
+        vx: 0.6, vy: -0.4,
+        episodeId: 'ep-1',
+      },
+      {
+        id: 'siput', name: 'Siput',
+        x: 12 * TILE_SIZE + TILE_SIZE / 2, y: 21 * TILE_SIZE + TILE_SIZE / 2,
+        color: '#a3e635', image: 'siput', dialogue: 'Lomba lari? Ayo!',
+        patrol: { x1: 10, y1: 20, x2: 14, y2: 22 },
+        vx: 0.3, vy: 0.2,
+        episodeId: 'ep-3',
+      },
     ];
 
-    for (let y = 3; y <= 10; y++) {
-      for (let x = 3; x <= 10; x++) {
+    for (let y = 3; y <= 12; y++) {
+      for (let x = 3; x <= 12; x++) {
         this.farmPlots.push({ x, y, crop: null, stage: 0, plantedAt: null });
       }
     }
+
+    // Challenge zones
+    this.challenges = [
+      { id: 'ch-buaya', tileX: 25, tileY: 16, episodeId: 'ep-1', name: 'Tantangan Buaya', completed: false, radius: 2 },
+      { id: 'ch-macan', tileX: 40, tileY: 16, episodeId: 'ep-2', name: 'Tantangan Macan', completed: false, radius: 2 },
+      { id: 'ch-siput', tileX: 12, tileY: 21, episodeId: 'ep-3', name: 'Tantangan Siput', completed: false, radius: 2 },
+    ];
   }
 
   // ---------- Collision ----------
   isSolid(tile) {
-    return tile === 4 || tile === 2 || tile === 5 || tile === 7;
+    return tile === 4 || tile === 2 || tile === 5 || tile === 7 || tile === 10;
   }
 
   getTileAt(px, py) {
@@ -239,10 +273,32 @@ export default class WorldEngine {
 
   handleMouseUp(e) {
     if (this.isDragging && e) {
-      // Check if click was on menu button (not a drag)
       const dx = Math.abs(e.clientX - this.dragStart.x);
       const dy = Math.abs(e.clientY - this.dragStart.y);
       if (dx < 5 && dy < 5) {
+        // Cek modal buttons
+        if (this.modalBox && this.modalButtons) {
+          const ab = this.modalButtons.approve;
+          const cb = this.modalButtons.cancel;
+          if (e.clientX >= ab.x && e.clientX <= ab.x + ab.w &&
+              e.clientY >= ab.y && e.clientY <= ab.y + ab.h) {
+            const challenge = this.approveChallenge();
+            if (challenge && this.onChallengeApprove) {
+              this.onChallengeApprove(challenge);
+            }
+            this.isDragging = false;
+            this.canvas.style.cursor = 'grab';
+            return;
+          }
+          if (e.clientX >= cb.x && e.clientX <= cb.x + cb.w &&
+              e.clientY >= cb.y && e.clientY <= cb.y + cb.h) {
+            this.cancelChallenge();
+            this.isDragging = false;
+            this.canvas.style.cursor = 'grab';
+            return;
+          }
+        }
+        // Cek menu button
         const btn = this.menuButton;
         if (e.clientX >= btn.x && e.clientX <= btn.x + btn.w &&
             e.clientY >= btn.y && e.clientY <= btn.y + btn.h) {
@@ -258,45 +314,55 @@ export default class WorldEngine {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
     const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom + delta));
-    
-    // Zoom towards mouse position
     const mouseX = e.clientX;
     const mouseY = e.clientY;
     const worldX = (mouseX / this.zoom) + this.camera.x;
     const worldY = (mouseY / this.zoom) + this.camera.y;
-    
     this.zoom = newZoom;
-    
     this.camera.x = worldX - (mouseX / this.zoom);
     this.camera.y = worldY - (mouseY / this.zoom);
   }
 
   // ---------- Interaksi ----------
   interact() {
+    if (this.modalBox) {
+      // Modal sedang tampil, jangan interaksi lagi
+      return;
+    }
+    if (this.dialogueBox) {
+      this.dialogueBox = null;
+      return;
+    }
     if (this.nearbyNpc) {
-      // Trigger story mode if NPC has a story episode
-      if (this.onNpcTalk && this.nearbyNpc.episodeId) {
-        this.onNpcTalk(this.nearbyNpc);
-        return;
-      }
       this.dialogueBox = { npc: this.nearbyNpc, text: this.nearbyNpc.dialogue };
-    } else {
-      const plot = this.getNearbyFarmPlot();
-      if (plot) {
-        if (plot.stage === 0) {
-          plot.crop = 'timun';
-          plot.stage = 1;
-          plot.plantedAt = Date.now();
-          this.dialogueBox = { npc: { name: 'Kebun' }, text: 'Benih timun ditanam! Tunggu hingga siap panen.' };
-        } else if (plot.stage === 3) {
-          plot.crop = null;
-          plot.stage = 0;
-          plot.plantedAt = null;
-          this.inventory.timun++;
-          this.dialogueBox = { npc: { name: 'Kebun' }, text: 'Timun dipanen! (+1 timun)' };
-        } else {
-          this.dialogueBox = { npc: { name: 'Kebun' }, text: `Timun sedang tumbuh... (${this.getFarmProgress(plot)}%)` };
-        }
+      return;
+    }
+    // Cek challenge zone terdekat
+    const challenge = this.getNearbyChallenge();
+    if (challenge && !challenge.completed) {
+      this.modalBox = {
+        title: challenge.name,
+        text: `Apakah kamu ingin melanjutkan tantangan "${challenge.name}"?`,
+        challenge: challenge,
+      };
+      return;
+    }
+    // Cek farm plot terdekat
+    const plot = this.getNearbyFarmPlot();
+    if (plot) {
+      if (plot.stage === 0) {
+        plot.crop = 'timun';
+        plot.stage = 1;
+        plot.plantedAt = Date.now();
+        this.dialogueBox = { npc: { name: 'Kebun' }, text: 'Benih timun ditanam! Tunggu hingga siap panen.' };
+      } else if (plot.stage === 3) {
+        plot.crop = null;
+        plot.stage = 0;
+        plot.plantedAt = null;
+        this.inventory.timun++;
+        this.dialogueBox = { npc: { name: 'Kebun' }, text: 'Timun dipanen! (+1 timun)' };
+      } else {
+        this.dialogueBox = { npc: { name: 'Kebun' }, text: `Timun sedang tumbuh... (${this.getFarmProgress(plot)}%)` };
       }
     }
   }
@@ -307,6 +373,19 @@ export default class WorldEngine {
     const ty = Math.floor(p.y / this.tileSize);
     for (const plot of this.farmPlots) {
       if (Math.abs(plot.x - tx) <= 1 && Math.abs(plot.y - ty) <= 1) return plot;
+    }
+    return null;
+  }
+
+  getNearbyChallenge() {
+    const p = this.player;
+    const tx = Math.floor(p.x / this.tileSize);
+    const ty = Math.floor(p.y / this.tileSize);
+    for (const ch of this.challenges) {
+      if (ch.completed) continue;
+      if (Math.abs(ch.tileX - tx) <= ch.radius && Math.abs(ch.tileY - ty) <= ch.radius) {
+        return ch;
+      }
     }
     return null;
   }
@@ -327,6 +406,34 @@ export default class WorldEngine {
       if (elapsed >= needed) {
         plot.stage += 1;
         if (plot.stage === 3) plot.plantedAt = now;
+      }
+    }
+  }
+
+  // Approve challenge (dipanggil dari main.js)
+  approveChallenge() {
+    if (!this.modalBox) return null;
+    const challenge = this.modalBox.challenge;
+    this.modalBox = null;
+    return challenge;
+  }
+
+  cancelChallenge() {
+    this.modalBox = null;
+  }
+
+  completeChallenge(challengeId) {
+    const ch = this.challenges.find((c) => c.id === challengeId);
+    if (ch) {
+      ch.completed = true;
+      this.completedChallenges.add(challengeId);
+      // Buka jalan terkunci
+      for (let y = 0; y < this.mapHeight; y++) {
+        for (let x = 0; x < this.mapWidth; x++) {
+          if (this.map[y][x] === 10) {
+            this.map[y][x] = 3; // buka jalan
+          }
+        }
       }
     }
   }
@@ -374,6 +481,28 @@ export default class WorldEngine {
 
     this.updateFarmGrowth();
 
+    // NPC bergerak bebas dalam area patrol
+    for (const npc of this.npcs) {
+      if (!npc.patrol) continue;
+      const p1x = npc.patrol.x1 * this.tileSize;
+      const p1y = npc.patrol.y1 * this.tileSize;
+      const p2x = npc.patrol.x2 * this.tileSize;
+      const p2y = npc.patrol.y2 * this.tileSize;
+
+      npc.x += npc.vx;
+      npc.y += npc.vy;
+
+      // Bounce di batas area
+      if (npc.x <= p1x || npc.x >= p2x) {
+        npc.vx = -npc.vx;
+        npc.x = Math.max(p1x, Math.min(p2x, npc.x));
+      }
+      if (npc.y <= p1y || npc.y >= p2y) {
+        npc.vy = -npc.vy;
+        npc.y = Math.max(p1y, Math.min(p2y, npc.y));
+      }
+    }
+
     this.nearbyNpc = null;
     for (const npc of this.npcs) {
       const dist = Math.hypot(npc.x - p.x, npc.y - p.y);
@@ -382,6 +511,8 @@ export default class WorldEngine {
         break;
       }
     }
+
+    this.nearbyChallenge = this.getNearbyChallenge();
 
     this.timeOfDay = (this.timeOfDay + this.daySpeed) % 1;
   }
@@ -393,16 +524,12 @@ export default class WorldEngine {
     const h = this.canvas.height;
 
     ctx.clearRect(0, 0, w, h);
-
-    // Background
     ctx.fillStyle = '#1a2a1a';
     ctx.fillRect(0, 0, w, h);
 
-    // Apply zoom to entire world rendering
     ctx.save();
     ctx.scale(this.zoom, this.zoom);
 
-    // Gambar tile
     const startX = Math.floor(this.camera.x / this.tileSize);
     const startY = Math.floor(this.camera.y / this.tileSize);
     const endX = startX + Math.ceil(w / (this.tileSize * this.zoom)) + 2;
@@ -414,19 +541,14 @@ export default class WorldEngine {
         const tile = this.map[ty][tx];
         const px = tx * this.tileSize - this.camera.x;
         const py = ty * this.tileSize - this.camera.y;
-        const ts = this.tileSize;
 
-        // Grass 3D effect
         if (tile === 0) {
-          // Base grass
           const grad = ctx.createLinearGradient(px, py, px, py + this.tileSize);
           grad.addColorStop(0, '#4a7a3a');
           grad.addColorStop(0.5, '#3a6a2a');
           grad.addColorStop(1, '#2a5a1a');
           ctx.fillStyle = grad;
           ctx.fillRect(px, py, this.tileSize, this.tileSize);
-
-          // Grass texture (blades)
           ctx.strokeStyle = 'rgba(255,255,255,0.08)';
           ctx.lineWidth = 1;
           for (let i = 0; i < 5; i++) {
@@ -437,32 +559,26 @@ export default class WorldEngine {
             ctx.lineTo(bx + 2, by - 6 - Math.random() * 4);
             ctx.stroke();
           }
-
-          // Shadow at bottom
           ctx.fillStyle = 'rgba(0,0,0,0.15)';
           ctx.fillRect(px, py + this.tileSize - 4, this.tileSize, 4);
         } else {
-          // Other tiles
-          const colors = { 1: '#5d4037', 2: '#1a3a5a', 3: '#8b7355', 4: '#2d4a1a', 5: '#6b6b6b', 6: '#4a3a1a', 7: '#5a3a2a', 8: '#4a4a2a' };
+          const colors = { 1: '#5d4037', 2: '#1a3a5a', 3: '#8b7355', 4: '#2d4a1a', 5: '#6b6b6b', 6: '#4a3a1a', 7: '#5a3a2a', 8: '#4a4a2a', 9: '#6a4a2a', 10: '#3a3a3a' };
           ctx.fillStyle = colors[tile] || '#3a5a2a';
           ctx.fillRect(px, py, this.tileSize, this.tileSize);
-
-          // Tile details
-          if (tile === 4) { // tree
+          if (tile === 4) {
             ctx.fillStyle = '#1a3a0a';
             ctx.beginPath();
             ctx.arc(px + this.tileSize / 2, py + this.tileSize / 2, this.tileSize / 2.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#3a2a1a';
             ctx.fillRect(px + this.tileSize / 2 - 3, py + this.tileSize / 2, 6, this.tileSize / 2);
-          } else if (tile === 2) { // water
+          } else if (tile === 2) {
             ctx.fillStyle = 'rgba(255,255,255,0.15)';
             ctx.fillRect(px + 4, py + 4, this.tileSize - 8, this.tileSize - 8);
-            // Water shimmer
             const shimmer = Math.sin(Date.now() * 0.003 + tx + ty) * 0.1 + 0.1;
             ctx.fillStyle = `rgba(100,180,255,${shimmer})`;
             ctx.fillRect(px, py, this.tileSize, this.tileSize);
-          } else if (tile === 6) { // farm
+          } else if (tile === 6) {
             const plot = this.farmPlots.find((pl) => pl.x === tx && pl.y === ty);
             ctx.fillStyle = '#3a2a1a';
             ctx.fillRect(px + 2, py + 2, this.tileSize - 4, this.tileSize - 4);
@@ -472,19 +588,35 @@ export default class WorldEngine {
               ctx.textAlign = 'center';
               ctx.fillText(emojis[plot.stage - 1] || '🌱', px + this.tileSize / 2, py + this.tileSize / 2 + 8);
             }
-          } else if (tile === 7) { // house
+          } else if (tile === 7) {
             ctx.fillStyle = '#3a2a1a';
             ctx.fillRect(px + 4, py + 4, this.tileSize - 8, this.tileSize - 8);
             ctx.fillStyle = '#fbbf24';
             ctx.font = '20px serif';
             ctx.textAlign = 'center';
             ctx.fillText('🏠', px + this.tileSize / 2, py + this.tileSize / 2 + 6);
-          } else if (tile === 8) { // npc spot
+          } else if (tile === 8) {
             ctx.fillStyle = 'rgba(255,213,79,0.12)';
             ctx.fillRect(px, py, this.tileSize, this.tileSize);
-          } else if (tile === 3) { // path
+          } else if (tile === 3) {
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.fillRect(px, py, this.tileSize, this.tileSize);
+          } else if (tile === 9) {
+            // Challenge zone
+            ctx.fillStyle = 'rgba(255,100,50,0.2)';
+            ctx.fillRect(px, py, this.tileSize, this.tileSize);
+            ctx.fillStyle = '#f97316';
+            ctx.font = '16px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚔️', px + this.tileSize / 2, py + this.tileSize / 2 + 6);
+          } else if (tile === 10) {
+            // Locked path
+            ctx.fillStyle = 'rgba(100,100,100,0.5)';
+            ctx.fillRect(px, py, this.tileSize, this.tileSize);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '16px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🔒', px + this.tileSize / 2, py + this.tileSize / 2 + 6);
           }
         }
       }
@@ -499,7 +631,9 @@ export default class WorldEngine {
         ctx.save();
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
-        ctx.drawImage(img, nx - 24, ny - 48, 48, 48);
+        // Animasi bobbing untuk NPC
+        const bob = Math.sin(Date.now() * 0.003 + npc.x) * 2;
+        ctx.drawImage(img, nx - 24, ny - 48 + bob, 48, 48);
         ctx.restore();
       } else {
         ctx.fillStyle = npc.color;
@@ -511,7 +645,6 @@ export default class WorldEngine {
         ctx.ellipse(nx, ny + 4, 10, 14, 0, 0, Math.PI * 2);
         ctx.fill();
       }
-      // Nama
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
@@ -521,21 +654,25 @@ export default class WorldEngine {
     // Gambar pemain (kancil)
     this.drawPlayer(ctx);
 
-    // Restore zoom for screen-space UI
     ctx.restore();
 
-    // Overlay siang/malam (screen space)
+    // Overlay siang/malam
     this.drawDayNightOverlay(ctx, w, h);
 
-    // HUD (screen space)
+    // HUD
     this.drawHUD(ctx, w, h);
 
-    // Dialogue box (screen space)
+    // Dialogue box
     if (this.dialogueBox) {
       this.drawDialogue(ctx, w, h);
     }
 
-    // Menu button (screen space)
+    // Modal konfirmasi tantangan
+    if (this.modalBox) {
+      this.drawModal(ctx, w, h);
+    }
+
+    // Menu button
     this.drawMenuButton(ctx, w, h);
   }
 
@@ -544,7 +681,6 @@ export default class WorldEngine {
     const px = p.x - this.camera.x;
     const py = p.y - this.camera.y;
 
-    // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();
     ctx.ellipse(px, py + 4, 12, 6, 0, 0, Math.PI * 2);
@@ -555,7 +691,6 @@ export default class WorldEngine {
       ctx.save();
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
-      // Animasi bobbing
       const bob = p.isMoving ? Math.sin(p.frame * Math.PI / 2) * 3 : 0;
       const sway = p.isMoving ? Math.sin(p.frame * Math.PI / 2) * 0.08 : 0;
       ctx.translate(0, bob);
@@ -564,7 +699,6 @@ export default class WorldEngine {
       ctx.drawImage(img, px - 24, py - 48, 48, 48);
       ctx.restore();
     } else {
-      // Fallback
       ctx.fillStyle = '#fbbf24';
       ctx.beginPath();
       ctx.arc(px, py - 8, 10, 0, Math.PI * 2);
@@ -594,7 +728,7 @@ export default class WorldEngine {
 
   drawHUD(ctx, w, h) {
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(10, 10, 200, 80);
+    ctx.fillRect(10, 10, 220, 90);
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 14px monospace';
     ctx.fillText('WAYANG KANCIL', 20, 30);
@@ -605,12 +739,19 @@ export default class WorldEngine {
     const hour = Math.floor(this.timeOfDay * 24);
     const minute = Math.floor((this.timeOfDay * 24 - hour) * 60);
     ctx.fillText(`Waktu: ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`, 20, 80);
+    ctx.fillText(`Zoom: ${this.zoom.toFixed(1)}x`, 20, 95);
 
     if (this.nearbyNpc) {
       ctx.fillStyle = '#fbbf24';
       ctx.font = 'bold 12px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(`[SPACE] Bicara dengan ${this.nearbyNpc.name}`, w / 2, h - 20);
+      ctx.textAlign = 'left';
+    } else if (this.nearbyChallenge && !this.nearbyChallenge.completed) {
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`[SPACE] ${this.nearbyChallenge.name}`, w / 2, h - 20);
       ctx.textAlign = 'left';
     } else {
       const plot = this.getNearbyFarmPlot();
@@ -625,25 +766,20 @@ export default class WorldEngine {
   }
 
   drawMenuButton(ctx, w, h) {
-    // Tombol menu di pojok kanan atas
     const btnX = w - 130;
     const btnY = 10;
     const btnW = 120;
     const btnH = 36;
-
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(btnX, btnY, btnW, btnH);
     ctx.strokeStyle = '#fbbf24';
     ctx.lineWidth = 2;
     ctx.strokeRect(btnX, btnY, btnW, btnH);
-
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('☰ Menu', btnX + btnW / 2, btnY + btnH / 2 + 4);
     ctx.textAlign = 'left';
-
-    // Store button bounds for click detection
     this.menuButton = { x: btnX, y: btnY, w: btnW, h: btnH };
   }
 
@@ -655,11 +791,9 @@ export default class WorldEngine {
     ctx.strokeStyle = '#fbbf24';
     ctx.lineWidth = 2;
     ctx.strokeRect(20, boxY, w - 40, boxH);
-
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 14px monospace';
     ctx.fillText(this.dialogueBox.npc.name || 'NPC', 40, boxY + 25);
-
     ctx.fillStyle = '#e5e7eb';
     ctx.font = '13px monospace';
     const lines = this.wrapText(ctx, this.dialogueBox.text, w - 80);
@@ -668,10 +802,73 @@ export default class WorldEngine {
       ctx.fillText(line, 40, yy);
       yy += 20;
     }
-
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px monospace';
     ctx.fillText('Tekan SPACE/ENTER untuk menutup', 40, boxY + boxH - 10);
+  }
+
+  // Modal konfirmasi tantangan
+  drawModal(ctx, w, h) {
+    // Background overlay
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, 0, w, h);
+
+    // Modal box
+    const boxW = 400;
+    const boxH = 180;
+    const boxX = (w - boxW) / 2;
+    const boxY = (h - boxH) / 2;
+
+    ctx.fillStyle = 'rgba(20,15,10,0.95)';
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+    // Title
+    ctx.fillStyle = '#f97316';
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.modalBox.title, w / 2, boxY + 35);
+
+    // Text
+    ctx.fillStyle = '#e5e7eb';
+    ctx.font = '13px monospace';
+    const lines = this.wrapText(ctx, this.modalBox.text, boxW - 40);
+    let yy = boxY + 65;
+    for (const line of lines) {
+      ctx.fillText(line, w / 2, yy);
+      yy += 20;
+    }
+
+    // Buttons
+    const btnY = boxY + boxH - 45;
+    const btnW = 120;
+    const btnH = 32;
+
+    // Approve button
+    const approveX = w / 2 - btnW - 10;
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(approveX, btnY, btnW, btnH);
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('Lanjutkan', approveX + btnW / 2, btnY + btnH / 2 + 4);
+
+    // Cancel button
+    const cancelX = w / 2 + 10;
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(cancelX, btnY, btnW, btnH);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('Batal', cancelX + btnW / 2, btnY + btnH / 2 + 4);
+
+    ctx.textAlign = 'left';
+
+    // Store button bounds for click detection
+    this.modalButtons = {
+      approve: { x: approveX, y: btnY, w: btnW, h: btnH },
+      cancel: { x: cancelX, y: btnY, w: btnW, h: btnH },
+    };
   }
 
   wrapText(ctx, text, maxWidth) {
@@ -710,15 +907,18 @@ export default class WorldEngine {
   loop(now) {
     const dt = (now - this.lastTime) / 1000;
     this.lastTime = now;
-
     this.update(dt);
     this.draw();
-
     this.animId = requestAnimationFrame(this.loop);
   }
 
   destroy() {
     this.stop();
     window.removeEventListener('resize', this.resize);
+    this.canvas.removeEventListener('mousedown', this.handleMouseDown);
+    this.canvas.removeEventListener('mousemove', this.handleMouseMove);
+    this.canvas.removeEventListener('mouseup', this.handleMouseUp);
+    this.canvas.removeEventListener('mouseleave', this.handleMouseUp);
+    this.canvas.removeEventListener('wheel', this.handleWheel);
   }
 }
