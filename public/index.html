@@ -32,6 +32,13 @@
             <option value="buaya">Buaya</option>
           </select>
         </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Episode Cerita</label>
+          <select id="episodeSelect" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500">
+            <option value="">-- Tanpa Episode (Chase Mode) --</option>
+          </select>
+        </div>
       </div>
 
       <!-- Room actions -->
@@ -42,6 +49,17 @@
         <button id="joinRoomBtn" class="py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded shadow-[0_0_15px_rgba(255,213,79,0.4)] transition">
           Gabung Room
         </button>
+      </div>
+
+      <!-- Cerita / Story Mode -->
+      <div id="storyModeField" class="mb-6 border-t border-gray-700 pt-6">
+        <h3 class="text-lg font-bold text-yellow-300 mb-3 text-center">Cerita Si Kancil</h3>
+        <button id="storyModeBtn" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded shadow-[0_0_15px_rgba(34,197,94,0.3)] transition">
+          Mode Cerita (Dalang)
+        </button>
+        <div id="storyList" class="mt-4 hidden space-y-2 max-h-48 overflow-y-auto pr-2">
+          <!-- episode list injected here -->
+        </div>
       </div>
 
       <!-- Room ID input -->
@@ -98,6 +116,19 @@
           <div class="text-xs text-yellow-400 font-mono">Karakter: <span id="hudCharacter">-</span></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Narrative Story Scene (Phase 6) -->
+  <div id="narrativeScene" class="fixed inset-0 z-30 hidden flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm">
+    <div id="narrativeContainer" class="w-full max-w-2xl h-full flex flex-col items-center justify-center p-6"></div>
+  </div>
+
+  <!-- Story Mode Canvas -->
+  <div id="storyContainer" class="fixed inset-0 z-30 hidden bg-black">
+    <canvas id="storyCanvas" class="block w-full h-full"></canvas>
+    <div id="storyUi" class="absolute bottom-8 left-8 right-8 z-40 pointer-events-none">
+      <div id="storyHint" class="text-center text-yellow-400 text-sm font-mono pointer-events-auto"></div>
     </div>
   </div>
 

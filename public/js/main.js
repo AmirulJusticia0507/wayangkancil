@@ -1,6 +1,8 @@
-// Wayang Kancil - Socket connection & UI handler (Phase 3)
+// Wayang Kancil - Socket connection & UI handler (Phase 3 + Phase 6)
 import GameEngine from './js/gameEngine.js';
 import SoundManager from './js/sound.js';
+import { getAllEpisodes } from './js/episodes.js';
+import { NarrativeEngine } from './js/narrativeEngine.js';
 
 const socket = io();
 const sound = new SoundManager();
@@ -10,9 +12,12 @@ const lobby = document.getElementById('lobby');
 const waitingRoom = document.getElementById('waitingRoom');
 const gameContainer = document.getElementById('gameContainer');
 const gameOver = document.getElementById('gameOver');
+const narrativeScene = document.getElementById('narrativeScene');
+const narrativeContainer = document.getElementById('narrativeContainer');
 
 const playerNameInput = document.getElementById('playerName');
 const characterSelect = document.getElementById('characterSelect');
+const episodeSelect = document.getElementById('episodeSelect');
 const roomIdInput = document.getElementById('roomId');
 const displayRoomId = document.getElementById('displayRoomId');
 const statusMsg = document.getElementById('statusMsg');
@@ -36,11 +41,26 @@ const playAgainBtn = document.getElementById('playAgainBtn');
 let myPlayerId = null;
 let myRoom = null;
 let myCharacter = null;
+let myEpisode = null;
 let isHost = false;
 let engine = null;
+let narrative = null;
 let score = 0;
 let boostUntil = 0;
 let lastAbility = 0;
+
+// ---------- Episode selection (Phase 6) ----------
+function populateEpisodes() {
+  const episodes = getAllEpisodes();
+  for (const ep of episodes) {
+    const opt = document.createElement('option');
+    opt.value = ep.id;
+    opt.textContent = `${ep.title} — ${ep.subtitle}`;
+    episodeSelect.appendChild(opt);
+  }
+}
+
+populateEpisodes();
 
 // ---------- Helpers ----------
 function showStatus(msg, isError = true) {
@@ -103,9 +123,10 @@ socket.on('error', ({ message }) => {
   showStatus(message);
 });
 
-socket.on('gameStarted', ({ roomId }) => {
+socket.on('gameStarted', ({ roomId, episodeId }) => {
   waitingRoom.classList.add('hidden');
-  gameContainer.classList.remove('hidden');
+  myRoom = roomId;
+  myEpisode = episodeId || null;
 
   hudRoom.textContent = roomId;
   hudCharacter.textContent = myCharacter;
@@ -119,8 +140,126 @@ socket.on('gameStarted', ({ roomId }) => {
   sound.playBgm();
   sound.playSfx('start');
 
-  initGameEngine(roomId);
+  // Jika ada episode, tampilkan narrative scene terlebih dahulu
+  if (myEpisode) {
+    gameContainer.classList.add('hidden');
+    narrativeScene.classList.remove('hidden');
+    startNarrative(myEpisode);
+  } else {
+    gameContainer.classList.remove('hidden');
+    initGameEngine(roomId);
+  }
 });
+
+// ---------- Narrative Story Flow (Phase 6) ----------
+function startNarrative(episodeId) {
+  const ep = getEpisode(episodeId);
+  if (!ep) {
+    startGameAfterNarrative();
+    return;
+  }
+
+  narrative = new NarrativeEngine('narrativeContainer');
+
+  // Bangun adegan cerita berdasarkan episode
+  const scenes = buildNarrativeScenes(ep);
+
+  narrative.loadScenes(scenes);
+  narrative.onComplete = () => {
+    narrativeScene.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    initGameEngine(myRoom);
+  };
+  narrative.start(0);
+}
+
+function getEpisode(episodeId) {
+  const episodes = getAllEpisodes();
+  return episodes.find((e) => e.id === episodeId) || null;
+}
+
+function buildNarrativeScenes(ep) {
+  // Adegan pembuka cerita
+  const scenes = [
+    {
+      speaker: 'Dalang',
+      text: `Cerita ${ep.title}: ${ep.subtitle}`,
+      bgColor: ep.bgColor,
+      puppets: [
+        { label: 'Si Kancil', x: 20, y: 60, flip: false },
+      ],
+    },
+    {
+      speaker: 'Narasi',
+      text: ep.story,
+      bgColor: ep.bgColor,
+      puppets: [
+        { label: 'Si Kancil', x: 20, y: 60, flip: false },
+        { label: ep.enemyType ? ep.enemyType : 'Musuh', x: 75, y: 60, flip: true },
+      ],
+    },
+    {
+      speaker: 'Tujuan',
+      text: ep.objective,
+      bgColor: ep.bgColor,
+      puppets: [
+        { label: 'Si Kancil', x: 50, y: 60, flip: false },
+      ],
+    },
+  ];
+
+  // Untuk episode negosiasi (ep-5), tambah pilihan
+  if (ep.id === 'ep-5') {
+    scenes.push({
+      speaker: 'Kancil (Hakim)',
+      text: 'Harimau dan Gajah, kamu berdua berselisih tentang sumber air. Apa pilihan terbaik untuk hutan?',
+      bgColor: ep.bgColor,
+      puppets: [
+        { label: 'Si Kancil', x: 25, y: 60, flip: false },
+        { label: 'Macan', x: 45, y: 60, flip: true },
+        { label: 'Gajah', x: 70, y: 60, flip: false },
+      ],
+      choices: [
+        { text: 'Berikan air lebih kepada Gajah karena ukurannya besar', nextScene: 4 },
+        { text: 'Bagi air sama rata untuk semua hewan', nextScene: 5 },
+        { text: 'Biarkan yang kuat mengambil semua air', nextScene: 6 },
+      ],
+    });
+    scenes.push({
+      speaker: 'Narasi',
+      text: 'Gajah merasa tidak puas dan hutan menjadi tidak damai. Perang pecah.',
+      bgColor: ep.bgColor,
+    });
+    scenes.push({
+      speaker: 'Narasi',
+      text: 'Semua hewan setuju. Sumber air dibagi adil, hutan kembali damai.',
+      bgColor: ep.bgColor,
+    });
+    scenes.push({
+      speaker: 'Narasi',
+      text: 'Kekakuan memenangi sengketa. Hutan hancur, tidak ada pemenang.',
+      bgColor: ep.bgColor,
+    });
+  }
+
+  // Adegan penutup dengan piwulang
+  scenes.push({
+    speaker: 'Piwulang',
+    text: ep.moral,
+    bgColor: ep.bgColor,
+    puppets: [
+      { label: 'Si Kancil', x: 50, y: 60, flip: false },
+    ],
+  });
+
+  return scenes;
+}
+
+function startGameAfterNarrative() {
+  narrativeScene.classList.add('hidden');
+  gameContainer.classList.remove('hidden');
+  initGameEngine(myRoom);
+}
 
 socket.on('gameStateUpdate', ({ players, timer }) => {
   if (!engine) return;
@@ -237,24 +376,28 @@ function enterWaitingRoom(roomState) {
 createRoomBtn.addEventListener('click', () => {
   const playerName = playerNameInput.value.trim();
   const character = characterSelect.value;
+  const episodeId = episodeSelect.value || null;
   if (!playerName) {
     showStatus('Nama pemain wajib diisi.');
     return;
   }
   myCharacter = character;
-  socket.emit('createRoom', { playerName, character });
+  myEpisode = episodeId;
+  socket.emit('createRoom', { playerName, character, episodeId });
 });
 
 joinRoomBtn.addEventListener('click', () => {
   const playerName = playerNameInput.value.trim();
   const character = characterSelect.value;
+  const episodeId = episodeSelect.value || null;
   const roomId = roomIdInput.value.trim().toUpperCase();
   if (!playerName || !roomId) {
     showStatus('Nama dan Room ID wajib diisi.');
     return;
   }
   myCharacter = character;
-  socket.emit('joinRoom', { roomId, playerName, character });
+  myEpisode = episodeId;
+  socket.emit('joinRoom', { roomId, playerName, character, episodeId });
 });
 
 copyRoomIdBtn.addEventListener('click', () => {

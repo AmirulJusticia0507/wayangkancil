@@ -32,3 +32,117 @@ canvas {
 .blencong-glow {
   box-shadow: 0 0 60px rgba(255, 213, 79, 0.35);
 }
+
+/* Narrative Story Scene (Phase 6) */
+.narrative-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.narrative-puppets {
+  position: relative;
+  z-index: 1;
+  height: 40vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.narrative-puppet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.puppet-silhouette {
+  width: 120px;
+  height: 160px;
+  background: #141414;
+  border-radius: 60% 60% 40% 40% / 60% 60% 40% 40%;
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+.puppet-label {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  font-family: monospace;
+  color: #fbbf24;
+}
+
+.narrative-dialog {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+
+.narrative-speaker {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.narrative-text {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #fbbf24;
+  border-radius: 0 30px 30px 30px;
+  padding: 1.5rem;
+  font-family: monospace;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #e5e7eb;
+  box-shadow: 0 0 20px rgba(255, 213, 79, 0.2);
+}
+
+.narrative-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 400px;
+  z-index: 2;
+}
+
+.narrative-choice {
+  background: rgba(255, 213, 79, 0.15);
+  border: 2px solid #fbbf24;
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.narrative-choice:hover {
+  background: rgba(255, 213, 79, 0.35);
+  transform: translateX(8px);
+}
+
+.narrative-next {
+  background: rgba(255, 213, 79, 0.15);
+  border: 2px solid #fbbf24;
+  color: #fff;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.narrative-next:hover {
+  background: rgba(255, 213, 79, 0.35);
+}

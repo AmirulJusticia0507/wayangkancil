@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 // ---------- Room management ----------
-// rooms: Map<roomId, { players: Map<socket.id, playerData>, createdAt }>
+// rooms: Map<roomId, { players: Map<socket.id, playerData>, createdAt, episodeId }>
 const rooms = new Map();
 
 function generateRoomId() {
@@ -73,6 +73,7 @@ function getRoomState(roomId) {
   if (!room) return null;
   return {
     roomId,
+    episodeId: room.episodeId || null,
     playerCount: room.players.size,
     players: Array.from(room.players.entries()).map(([id, p]) => ({
       id,
@@ -91,7 +92,7 @@ function getRoomState(roomId) {
 io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
 
-  socket.on('createRoom', ({ playerName, character }) => {
+  socket.on('createRoom', ({ playerName, character, episodeId }) => {
     const roomId = generateRoomId();
     const room = addPlayerToRoom(roomId, socket.id, {
       playerName,
@@ -101,6 +102,11 @@ io.on('connection', (socket) => {
       direction: 'right',
       actionState: 'idle',
     });
+
+    // Simpan episode terpilih di room
+    if (episodeId) {
+      room.episodeId = episodeId;
+    }
 
     socket.data.roomId = roomId;
     socket.data.playerName = playerName;
@@ -114,14 +120,21 @@ io.on('connection', (socket) => {
       roomState: getRoomState(roomId),
     });
 
-    console.log(`Room created: ${roomId} by ${playerName}`);
+    console.log(`Room created: ${roomId} by ${playerName}${episodeId ? ` (episode: ${episodeId})` : ''}`);
   });
 
-  socket.on('joinRoom', ({ roomId, playerName, character }) => {
+  socket.on('joinRoom', ({ roomId, playerName, character, episodeId }) => {
     const room = rooms.get(roomId);
     if (!room) {
       socket.emit('error', { message: 'Room tidak ditemukan.' });
       return;
+    }
+
+    // Jika room sudah punya episode, pakai episode room tersebut
+    if (room.episodeId) {
+      episodeId = room.episodeId;
+    } else if (episodeId) {
+      room.episodeId = episodeId;
     }
 
     addPlayerToRoom(roomId, socket.id, {
@@ -146,7 +159,7 @@ io.on('connection', (socket) => {
     });
 
     io.to(roomId).emit('roomState', getRoomState(roomId));
-    console.log(`${playerName} joined room ${roomId}`);
+    console.log(`${playerName} joined room ${roomId}${episodeId ? ` (episode: ${episodeId})` : ''}`);
   });
 
   socket.on('playerMoved', ({ x, y, direction, actionState }) => {
@@ -215,7 +228,10 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (!room || !room.players.get(socket.id)?.isHost) return;
 
-    io.to(roomId).emit('gameStarted', { roomId });
+    io.to(roomId).emit('gameStarted', {
+      roomId,
+      episodeId: room.episodeId || null,
+    });
   });
 
   socket.on('disconnect', () => {
