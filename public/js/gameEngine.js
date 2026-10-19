@@ -9,6 +9,7 @@ export default class GameEngine {
     // Interpolasi gerakan (smooth movement)
     this.players = new Map();      // id -> { id, name, character, x, y, targetX, targetY, direction, actionState, vx, vy }
     this.items = [];               // { x, y, type } (cucumber placeholders)
+    this.effects = [];             // { type, x, y, ttl, maxTtl } (ability visual effects)
     this.roomId = null;
 
     // Loop
@@ -165,6 +166,57 @@ export default class GameEngine {
     p.vy = p.targetY - p.y;
   }
 
+  // ---------- Ability visual effects ----------
+  addEffect({ type, x, y, ttl = 600 }) {
+    this.effects.push({ type, x, y, ttl, maxTtl: ttl, createdAt: Date.now() });
+  }
+
+  drawEffects(ctx) {
+    const now = Date.now();
+    for (const e of this.effects) {
+      const age = now - e.createdAt;
+      const t = age / e.ttl;
+      if (t >= 1) continue;
+
+      const alpha = 1 - t;
+      const scale = 1 + t * 2;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(e.x, e.y);
+
+      if (e.type === 'sprint') {
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 25 * scale, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (e.type === 'teleport') {
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(0, 0, 18 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (e.type === 'snap') {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, 40 * scale, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (e.type === 'trap') {
+        ctx.fillStyle = '#84cc16';
+        ctx.fillRect(-14 * scale, -14 * scale, 28 * scale, 28 * scale);
+      }
+
+      ctx.restore();
+    }
+
+    // Hapus efek yang kadaluarsa
+    this.effects = this.effects.filter((e) => {
+      const age = Date.now() - e.createdAt;
+      return age < e.ttl;
+    });
+  }
+
   // ---------- Main loop ----------
   start() {
     if (this.animId) return;
@@ -191,6 +243,7 @@ export default class GameEngine {
 
     this.drawParchmentBackground(ctx, w, h, now);
     this.drawItems(ctx);
+    this.drawEffects(ctx);
     this.drawHUD(ctx);
 
     for (const [id, p] of this.players.entries()) {

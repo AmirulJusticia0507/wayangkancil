@@ -37,6 +37,8 @@ let myCharacter = null;
 let isHost = false;
 let engine = null;
 let score = 0;
+let boostUntil = 0;
+let lastAbility = 0;
 
 // ---------- Helpers ----------
 function showStatus(msg, isError = true) {
@@ -276,16 +278,39 @@ function initGameEngine(roomId) {
 
   // Input lokal -> kirim playerMoved ke server
   const keys = {};
-  window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+
+    // Ability dengan tombol SPACE (cooldown 5 detik)
+    if (e.code === 'Space') {
+      const now = Date.now();
+      if (now - lastAbility < 5000) return;
+      lastAbility = now;
+
+      const me = engine.players.get(myPlayerId);
+      if (!me) return;
+
+      let abilityId = 'sprint';
+      if (myCharacter === 'macan') abilityId = 'teleport';
+      if (myCharacter === 'buaya') abilityId = 'snap';
+      if (myCharacter === 'pak-tani') abilityId = 'trap';
+
+      socket.emit('useAbility', { abilityId, targetPos: { x: me.targetX, y: me.targetY } });
+
+      // Efek lokal segera (tidak perlu tunggu server balik)
+      triggerAbilityEffect({ playerId: myPlayerId, character: myCharacter, abilityId, x: me.x, y: me.y, direction: me.direction });
+    }
+  });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
   // Loop input 30 FPS -> emit ke server, engine sendiri render via requestAnimationFrame
   setInterval(() => {
+    const speed = Date.now() < boostUntil ? 10 : 5; // sprint ability = 2x cepat
     let dx = 0, dy = 0;
-    if (keys['ArrowLeft'] || keys['KeyA']) { dx = -5; }
-    if (keys['ArrowRight'] || keys['KeyD']) { dx = 5; }
-    if (keys['ArrowUp'] || keys['KeyW']) dy = -5;
-    if (keys['ArrowDown'] || keys['KeyS']) dy = 5;
+    if (keys['ArrowLeft'] || keys['KeyA']) { dx = -speed; }
+    if (keys['ArrowRight'] || keys['KeyD']) { dx = speed; }
+    if (keys['ArrowUp'] || keys['KeyW']) dy = -speed;
+    if (keys['ArrowDown'] || keys['KeyS']) dy = speed;
 
     const me = engine.players.get(myPlayerId);
     if (me) {
@@ -313,7 +338,42 @@ function initGameEngine(roomId) {
 }
 
 function triggerAbilityEffect(data) {
-  // Placeholder untuk efek ability (Phase 4)
+  if (!engine) return;
+
+  const p = engine.players.get(data.playerId);
+  const x = data.x ?? (p ? p.x : 0);
+  const y = data.y ?? (p ? p.y : 0);
+
+  // Efek visual untuk semua client yang menerima event
+  engine.addEffect({ type: data.abilityId, x, y });
+
+  // Gameplay hanya berlaku untuk pemain lokal
+  if (data.playerId !== myPlayerId) return;
+
+  const me = engine.players.get(myPlayerId);
+  if (!me) return;
+
+  switch (data.abilityId) {
+    case 'sprint': // Si Kancil: gerakan 2x lebih cepat selama 3 detik
+      boostUntil = Date.now() + 3000;
+      showStatus('Ability Kancil: Sprint! (3 detik)', false);
+      break;
+
+    case 'teleport': // Macan: lompat jauh ke arah yang dihadapkan
+      const jump = me.direction === 'left' ? -150 : 150;
+      me.targetX = Math.max(20, Math.min(canvas.width - 20, me.x + jump));
+      me.x = me.targetX;
+      showStatus('Ability Macan: Teleport!', false);
+      break;
+
+    case 'snap': // Buaya: efek area (visual saja di Phase 4)
+      showStatus('Ability Buaya: Snap!', false);
+      break;
+
+    case 'trap': // Pak Tani: jala (visual saja di Phase 4)
+      showStatus('Ability Pak Tani: Jala!', false);
+      break;
+  }
 }
 
 playAgainBtn.addEventListener('click', () => {
