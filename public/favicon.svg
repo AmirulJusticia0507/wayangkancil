@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="70%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Siluet Kancil Wayang Kulit (hitam) -->
+  <g fill="#121212" filter="url(#shadow)">
+    <!-- Badan -->
+    <path d="M11 16 Q11 12 14 10 Q17 10 17 14 L17 18 Q17 20 15 20 Q13 20 13 18 L11 18 Q11 20 9 20 Q7 20 7 18 L7 14 Q7 10 10 10 Q11 10 11 16 Z"/>
+    <!-- Kepala -->
+    <circle cx="12" cy="8" r="2.5" />
+    <!-- Telinga kiri -->
+    <path d="M10 6 Q9 4 10 5 Q11 6 10 6 Z"/>
+    <!-- Telinga kanan -->
+    <path d="M14 6 Q15 4 14 5 Q13 6 14 6 Z"/>
+    <!-- Kaki -->
+    <path d="M9 18 L9 21 Q9 22 10 22 L10 18 Z"/>
+    <path d="M11 18 L11 21 Q11 22 12 22 L12 18 Z"/>
+    <path d="M14 18 L14 21 Q14 22 15 22 L15 18 Z"/>
+    <path d="M16 18 L16 21 Q16 22 17 22 L17 18 Z"/>
+    <!-- Ekor -->
+    <path d="M17 16 Q19 16 19 14 Q17 14 17 16 Z"/>
+  </g>
+
+  <!-- Aksen keemasan halus di sekitar siluet -->
+  <path fill="url(#glow)" d="M11 16 Q11 12 14 10 Q17 10 17 14 L17 18 Q17 20 15 20 Q13 20 13 18 L11 18 Q11 20 9 20 Q7 20 7 18 L7 14 Q7 10 10 10 Q11 10 11 16 Z" opacity="0.15"/>
+</svg>
