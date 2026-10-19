@@ -81,3 +81,32 @@ Jangan melakukan commit kosong. Pastikan ada perubahan file yang nyata sebelum c
 - Selalu baca `wayang_kancil_game_spec.md` sebelum mengubah fitur agar selaras dengan roadmap dan spesifikasi.
 - Jika terdapat keraguan tentang arah implementasi, tanyakan kepada pengguna sebelum melanjutkan.
 - Prioritaskan konsistensi estetika wayang kulit (siluet, latar bayangan *Kelir*, cahaya *Blencong*, bunyi Gamelan).
+
+## 🌱 Prinsip Desain Budaya Jawa (dari analisis karakter Kancil)
+
+Setiap fitur dan cerita yang ditambahkan harus mempertimbangkan dimensi kultural berikut:
+
+### A. Ngawur Tanpa Aji — Akal Mengalahkan Kekuatan
+Kancil mewakili *wong cilik* yang menang melalui *akal budi*, *eling lan waspada*, dan kelincahan berpikir, bukan kekuatan fisik.
+- Implementasi: ability Kancil harus berfokus pada strategi, ilusi, dan strategi bertahan (misal: sprint, bluff, teleport), bukan serang langsung.
+
+### B. Kepemimpinan Jawa & Nalar — Menang tanpa Ngasorake
+Kancil sebagai mediator/penengah konflik (misal: Harimau vs Kerbau) mencerminkan pemimpin yang cerdik menyelesaikan masalah tanpa pertumpahan darah.
+- Implementasi: episode negosiasi (ep-5) harus hadirkan opsi perdamaian sebagai ending terbaik, bukan paksa.
+
+### C. Dualisme Watak — Kancil Cerdik vs Culas
+Kecerdikan Kancil dihormati jika digunakan untuk bertahan dan membela lemah, tetapi dikritik jika digunakan untuk merugikan (misal: mencuri timun Pak Tani).
+- Implementasi: multiple endings harus mencerminkan konsekuensi — ending "cerdik" berbeda dengan ending "paksa/culas".
+
+### D. Pesan Moral yang Telah Dianalisis
+| Nilai | Implementasi dalam Cerita |
+| :--- | :--- |
+| **Oja Dumeh** (Jangan sombong) | Kancil kalah dari Siput karena meremehkan lawan |
+| **Gotong Royong** | Kerja kolektif siput mengalahkan kecepatan individual |
+| **Ngundhuh Wohing Pakarti** | Tindakan licik yang merugikan akan membawa konsekuensi |
+| **Akal Unjuk Diri** | Kancil memanfaatkan situasi untuk keluar dari ancaman |
+
+### Aturan Implementasi
+- Hindari menggambarkan Kancil sebagai sosok jahat murni; dia adalah pemulang strategi bertahan hidup.
+- Setiap episode harus menyampaikan *piwulang* (pelajaran moral) yang jelas di akhir.
+- Desain visual harus tetap estetika wayang kulit (siluet, latar bayangan *Kelir*, cahaya *Blencong*).
