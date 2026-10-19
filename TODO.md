@@ -12,8 +12,8 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Implement Socket.io connection, room creation, and room joining logic.
 
 ## Phase 3: Wayang Canvas Engine & Visual Aesthetics
-- [ ] Implement HTML5 Canvas with Wayang silhouette aesthetic (shadow filter, parchment background).
-- [ ] Add smooth player movement interpolation.
+- [x] [DONE] Implement HTML5 Canvas with Wayang silhouette aesthetic (shadow filter, parchment background).
+- [x] [DONE] Add smooth player movement interpolation.
 
 ## Phase 4: Game Logic & Character Abilities
 - [ ] Implement collision detection, score pickup logic (cucumbers), and player interaction.
