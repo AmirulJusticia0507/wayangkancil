@@ -40,7 +40,7 @@ const joinRoomBtn = document.getElementById('joinRoomBtn');
 const copyRoomIdBtn = document.getElementById('copyRoomIdBtn');
 const startGameBtn = document.getElementById('startGameBtn');
 const storyModeBtn = document.getElementById('storyModeBtn');
-const openWorldBtn = document.getElementById('openWorldBtn');
+const startGameBtn2 = document.getElementById('startGameBtn2');
 const playersList = document.getElementById('playersList');
 
 const hudRoom = document.getElementById('hudRoom');
@@ -309,17 +309,54 @@ function startOpenWorld() {
   piwulangScreen.classList.add('hidden');
   gameContainer.classList.remove('hidden');
 
+  // Tambah tombol menu HTML overlay
+  if (!document.getElementById('worldMenuBtn')) {
+    const menuBtn = document.createElement('button');
+    menuBtn.id = 'worldMenuBtn';
+    menuBtn.textContent = '☰ Menu';
+    menuBtn.className = 'absolute top-3 right-3 z-50 px-4 py-2 bg-black/70 text-yellow-400 border border-yellow-500/50 rounded font-bold text-xs hover:bg-yellow-500/20 transition';
+    menuBtn.onclick = () => {
+      if (confirm('Kembali ke halaman awal?')) {
+        stopOpenWorld();
+      }
+    };
+    gameContainer.appendChild(menuBtn);
+  }
+
   // Inisialisasi world engine
   const canvas = document.getElementById('gameCanvas');
   worldEngine = new WorldEngine(canvas, canvas.getContext('2d'));
   worldEngine.createDefaultMap();
+
+  // Callback ketika bicara dengan NPC yang punya cerita
+  worldEngine.onNpcTalk = (npc) => {
+    // Pause world engine
+    if (worldEngine) worldEngine.stop();
+    window.removeEventListener('keydown', openWorldKeyDown);
+    window.removeEventListener('keyup', openWorldKeyUp);
+
+    // Sembunyikan canvas, tampilkan narrative
+    gameContainer.classList.add('hidden');
+    const menuBtn = document.getElementById('worldMenuBtn');
+    if (menuBtn) menuBtn.style.display = 'none';
+    narrativeScene.classList.remove('hidden');
+
+    // Mulai narrative untuk episode NPC ini
+    myEpisode = npc.episodeId;
+    isSoloMode = true;
+    soloStoryQueue = [npc.episodeId];
+    soloStoryIndex = 0;
+    playerChoices = [];
+    startNarrative(npc.episodeId);
+  };
+
   worldEngine.start();
 
   // Input keyboard untuk open world
   window.addEventListener('keydown', openWorldKeyDown);
   window.addEventListener('keyup', openWorldKeyUp);
 
-  showStatus('Selamat datang di Dunia Wayang! Gunakan WASD/Arrow untuk bergerak, SPACE untuk interaksi.', false);
+  showStatus('Selamat datang di Dunia Wayang! Gunakan WASD/Arrow untuk bergerak, SPACE untuk interaksi, ESC untuk menu.', false);
 }
 
 function openWorldKeyDown(e) {
@@ -351,12 +388,14 @@ function stopOpenWorld() {
   isOpenWorldMode = false;
   window.removeEventListener('keydown', openWorldKeyDown);
   window.removeEventListener('keyup', openWorldKeyUp);
+  const menuBtn = document.getElementById('worldMenuBtn');
+  if (menuBtn) menuBtn.remove();
   gameContainer.classList.add('hidden');
   lobby.classList.remove('hidden');
 }
 
-if (openWorldBtn) {
-  openWorldBtn.addEventListener('click', startOpenWorld);
+if (startGameBtn2) {
+  startGameBtn2.addEventListener('click', startOpenWorld);
 }
 
 // Tampilkan status hati di lobby (disetelah elemen DOM siap)
@@ -1089,7 +1128,19 @@ function showPiwulangScreen(ep, choices = []) {
 
 piwulangStartBtn.addEventListener('click', () => {
   piwulangScreen.classList.add('hidden');
-  if (isSoloMode) {
+  if (isOpenWorldMode) {
+    // Kembali ke open world setelah cerita selesai
+    isSoloMode = false;
+    narrativeScene.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    const menuBtn = document.getElementById('worldMenuBtn');
+    if (menuBtn) menuBtn.style.display = '';
+    if (worldEngine) {
+      worldEngine.start();
+      window.addEventListener('keydown', openWorldKeyDown);
+      window.addEventListener('keyup', openWorldKeyUp);
+    }
+  } else if (isSoloMode) {
     // Lanjut ke episode berikutnya dalam antrean solo story
     playNextSoloEpisode();
   } else {
