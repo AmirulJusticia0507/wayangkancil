@@ -2,6 +2,24 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
+
+// Load .env file jika ada (untuk AI_API_KEY, dll)
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim();
+    if (key && !process.env[key]) {
+      process.env[key] = val;
+    }
+  }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -22,6 +40,58 @@ app.get('/health', (req, res) => {
 // Main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ---------- AI Proxy (server-side, API key tidak terekspos ke client) ----------
+app.use(express.json());
+
+// Cek apakah AI API key tersedia di server
+app.get('/api/ai/status', (req, res) => {
+  res.json({ available: !!process.env.AI_API_KEY });
+});
+
+app.post('/api/ai/chat', async (req, res) => {
+  const apiKey = process.env.AI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'AI_API_KEY belum diset di server.' });
+  }
+
+  const { messages, model } = req.body;
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: 'messages wajib berupa array.' });
+  }
+
+  const selectedModel = model || 'deepseek-v4.1-flash';
+  const allowedModels = ['deepseek-v4.1-flash', 'hy3', 'step-5-preview'];
+  if (!allowedModels.includes(selectedModel)) {
+    return res.status(400).json({ error: 'Model tidak diizinkan.' });
+  }
+
+  try {
+    const response = await fetch('https://ai.xemarux.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      return res.status(response.status).json({ error: error });
+    }
+
+    const data = await response.json();
+    return res.json({ content: data.choices?.[0]?.message?.content || '' });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 });
 
 // ---------- Room management ----------

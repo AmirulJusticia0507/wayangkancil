@@ -2,9 +2,8 @@
 // Base URL dan model gratis dari ai.xemarux.com
 
 export const AI_CONFIG = {
+    // Base URL (untuk referensi, request via server proxy)
     baseURL: 'https://ai.xemarux.com/v1',
-    // API key akan diisi oleh pengguna (nanti)
-    apiKey: 'sk-router-k4HNo4mXPQ0c3N0s5sfth35MFBFOmZ0W',
     // Model gratis (×0.0)
     freeModels: [
         'deepseek-v4.1-flash',
@@ -17,14 +16,19 @@ export const AI_CONFIG = {
     timeout: 30000,
 };
 
-// Helper: cek apakah API key sudah diisi
-export function hasApiKey() {
-    return !!AI_CONFIG.apiKey && AI_CONFIG.apiKey.trim().length > 0;
+// Cek apakah AI tersedia di server (API key diset di env var AI_API_KEY)
+export async function checkAiAvailable() {
+    try {
+        const res = await fetch('/api/ai/status');
+        const data = await res.json();
+        return data.available === true;
+    } catch (e) {
+        return false;
+    }
 }
 
-// Helper: set API key
+// Helper: set API key (disimpan di localStorage, tapi server tetap pakai env var)
 export function setApiKey(key) {
-    AI_CONFIG.apiKey = key;
     try {
         localStorage.setItem('wayangkancil_api_key', key);
     } catch (e) {
@@ -35,36 +39,26 @@ export function setApiKey(key) {
 // Load API key dari localStorage jika ada
 export function loadApiKey() {
     try {
-        const key = localStorage.getItem('wayangkancil_api_key');
-        if (key) AI_CONFIG.apiKey = key;
+        return localStorage.getItem('wayangkancil_api_key') || '';
     } catch (e) {
-        // silent
+        return '';
     }
 }
 
-loadApiKey();
-
-// Simple AI client
+// Simple AI client — via server proxy (API key tidak terekspos ke client)
 export async function aiChat(messages, model = AI_CONFIG.defaultModel) {
-    if (!hasApiKey()) {
-        throw new Error('API key belum diisi. Silakan masukkan API key terlebih dahulu.');
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), AI_CONFIG.timeout);
 
     try {
-        const response = await fetch(`${AI_CONFIG.baseURL}/chat/completions`, {
+        const response = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
             },
             body: JSON.stringify({
-                model: model,
                 messages: messages,
-                temperature: 0.7,
-                max_tokens: 500,
+                model: model,
             }),
             signal: controller.signal,
         });
@@ -72,12 +66,12 @@ export async function aiChat(messages, model = AI_CONFIG.defaultModel) {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`AI request failed: ${response.status} - ${error}`);
+            const error = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(`AI request failed: ${response.status} - ${error.error || response.statusText}`);
         }
 
         const data = await response.json();
-        return data.choices?.[0]?.message?.content || '';
+        return data.content || '';
     } catch (e) {
         clearTimeout(timeoutId);
         throw e;

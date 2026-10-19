@@ -5,7 +5,7 @@ import SoundManager from './sound.js';
 import { getAllEpisodes } from './episodes.js';
 import { NarrativeEngine } from './narrativeEngine.js';
 import WorldEngine from './worldEngine.js';
-import { AI_CONFIG, setApiKey, loadApiKey, hasApiKey } from './aiConfig.js';
+import { AI_CONFIG, checkAiAvailable } from './aiConfig.js';
 
 // Vercel WebSocket connections must skip Socket.io's polling handshake so the
 // entire connection remains pinned to one function instance.
@@ -227,26 +227,16 @@ if (themeToggleBtn) {
   themeToggleBtn.addEventListener('click', toggleTheme);
 }
 
-// ---------- AI Configuration (opsional) ----------
-const apiKeyInput = document.getElementById('apiKeyInput');
-const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+// ---------- AI Status ----------
+const aiStatus = document.getElementById('aiStatus');
 
-loadApiKey();
-if (apiKeyInput && AI_CONFIG.apiKey) {
-  apiKeyInput.value = AI_CONFIG.apiKey;
-}
-
-if (saveApiKeyBtn) {
-  saveApiKeyBtn.addEventListener('click', () => {
-    const key = apiKeyInput.value.trim();
-    if (!key) {
-      showStatus('API key tidak boleh kosong.');
-      return;
-    }
-    setApiKey(key);
-    showStatus('API key disimpan.', false);
-  });
-}
+(async () => {
+  if (aiStatus) {
+    const available = await checkAiAvailable();
+    aiStatus.textContent = available ? '✅ AI tersedia (server)' : '❌ AI tidak tersedia (set AI_API_KEY di .env)';
+    aiStatus.className = available ? 'text-xs text-green-400' : 'text-xs text-red-400';
+  }
+})();
 
 // ---------- Cerita Sendiri / Solo Story Mode (tambahan) ----------
 function startSoloStory(episodeId) {
