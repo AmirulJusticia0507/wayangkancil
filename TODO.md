@@ -33,7 +33,7 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Add dedicated piwulang screen per story after narrative ends.
 - [x] [DONE] Implement multiple endings based on player choices (cerdas / paksa / damai).
 - [x] [DONE] Add story progress tracking (localStorage).
-- [ ] Implement multiplayer story voting (Dalang mode).
+- [x] [DONE] Implement multiplayer story voting (Dalang mode).
 
 ## Aturan Wajib
 Setiap checklist di atas yang sudah selesai dikerjakan:
