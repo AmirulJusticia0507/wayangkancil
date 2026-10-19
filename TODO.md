@@ -25,7 +25,7 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 
 ## Phase 6: Cerita / Lakon Mode (Dalang / Storyteller)
 - [x] [DONE] Create story data structure (Kancil & Buaya, Kancil & Harimau, Kancil & Siput, Kancil & Kerbau, Hakim Harimau & Gajah).
-- [ ] Build narrative scene engine (dialogue, choices, puppet display).
+- [x] [DONE] Build narrative scene engine (dialogue, choices, puppet display).
 - [ ] Implement story selection screen in lobby.
 - [ ] Integrate story mode into main game flow.
 

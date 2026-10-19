@@ -1,7 +1,7 @@
 // Wayang Kancil - Story Mode / Dalang Engine (Phase 6)
 // Mengelola adegan narasi, dialog, pilihan, dan wayang pada canvas.
 
-import { getEpisode, getAllEpisodes } from './js/episodes.js';
+import { getEpisode, getAllEpisodes } from './episodes.js';
 
 export class StoryEngine {
   constructor(canvas, ctx) {
