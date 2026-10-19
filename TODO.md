@@ -20,8 +20,8 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Add character specific abilities (e.g., Kancil sprint/trickery).
 
 ## Phase 5: Audio, Polish & Moral Story Screen
-- [ ] Integrate Gamelan ambient sound effects.
-- [ ] Add end-game screen displaying traditional Wayang Kancil moral lessons (*piwulang*).
+- [x] [DONE] Integrate Gamelan ambient sound effects.
+- [x] [DONE] Add end-game screen displaying traditional Wayang Kancil moral lessons (*piwulang*).
 
 ## Aturan Wajib
 Setiap checklist di atas yang sudah dicentang (selesai dikerjakan):
