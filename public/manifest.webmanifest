@@ -1,0 +1,35 @@
+{
+  "id": "/",
+  "name": "Wayang Kancil",
+  "short_name": "Kancil",
+  "description": "Game multiplayer Wayang Kancil tentang akal budi, strategi, dan cerita rakyat Nusantara.",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0b09",
+  "theme_color": "#0b0b09",
+  "categories": ["games", "education", "entertainment"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

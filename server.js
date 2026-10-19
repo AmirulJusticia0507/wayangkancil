@@ -7,8 +7,17 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+app.get('/sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+
 // Serve static assets
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Main page
 app.get('/', (req, res) => {
@@ -291,7 +300,7 @@ io.on('connection', (socket) => {
 });
 
 // Periodic world state sync (~30 FPS) for rooms that have started
-setInterval(() => {
+const gameStateInterval = setInterval(() => {
   for (const [roomId, room] of rooms.entries()) {
     if (room.players.size === 0) continue;
 
@@ -311,8 +320,13 @@ setInterval(() => {
     });
   }
 }, 1000 / 30);
+gameStateInterval.unref();
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = server;

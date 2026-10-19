@@ -4,7 +4,9 @@ import SoundManager from './js/sound.js';
 import { getAllEpisodes } from './js/episodes.js';
 import { NarrativeEngine } from './js/narrativeEngine.js';
 
-const socket = io();
+// Vercel WebSocket connections must skip Socket.io's polling handshake so the
+// entire connection remains pinned to one function instance.
+const socket = io({ transports: ['websocket'] });
 const sound = new SoundManager();
 
 // ---------- DOM ----------
