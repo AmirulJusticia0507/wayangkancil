@@ -15,6 +15,10 @@ const gameOver = document.getElementById('gameOver');
 const narrativeScene = document.getElementById('narrativeScene');
 const narrativeContainer = document.getElementById('narrativeContainer');
 const piwulangScreen = document.getElementById('piwulangScreen');
+
+const votePanel = document.getElementById('votePanel');
+const voteOptions = document.getElementById('voteOptions');
+const voteResults = document.getElementById('voteResults');
 const piwulangTitle = document.getElementById('piwulangTitle');
 const piwulangStory = document.getElementById('piwulangStory');
 const piwulangMoral = document.getElementById('piwulangMoral');
@@ -104,7 +108,43 @@ function populateEpisodes() {
   }
 }
 
-populateEpisodes();
+function renderVoteOptions() {
+  const episodes = getAllEpisodes();
+  voteOptions.innerHTML = '';
+  for (const ep of episodes) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `px-3 py-2 rounded text-sm font-medium border transition ${episodeSelect.value === ep.id ? 'bg-yellow-500 text-black border-yellow-500' : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'}`;
+    btn.textContent = `${ep.title}`;
+    btn.onclick = () => {
+      episodeSelect.value = ep.id;
+      myEpisode = ep.id;
+      renderVoteOptions();
+      socket.emit('voteEpisode', { episodeId: ep.id });
+    };
+    voteOptions.appendChild(btn);
+  }
+}
+
+function renderVoteResults(votes) {
+  if (!votes || Object.keys(votes).length === 0) {
+    voteResults.textContent = 'Belum ada suara.';
+    return;
+  }
+  const lines = Object.entries(votes)
+    .map(([epId, count]) => {
+      const ep = getAllEpisodes().find((e) => e.id === epId);
+      return `${ep ? ep.title : epId}: ${count} suara`;
+    })
+    .join(' | ');
+  voteResults.textContent = 'Suara: ' + lines;
+}
+renderVoteOptions();
+
+episodeSelect.addEventListener('change', () => {
+  myEpisode = episodeSelect.value || null;
+  renderVoteOptions();
+});
 
 // ---------- Helpers ----------
 function showStatus(msg, isError = true) {
@@ -156,6 +196,22 @@ socket.on('roomJoined', ({ roomId, isHost: host, roomState }) => {
 socket.on('roomState', (roomState) => {
   renderPlayers(roomState.players);
   startGameBtn.disabled = !isHost || roomState.playerCount < 1;
+
+  // Tampilkan panel voting jika ada episode yang dipilih
+  if (myEpisode) {
+    votePanel.classList.remove('hidden');
+    const counts = {};
+    for (const [ep, ids] of Object.entries(roomState.votes || {})) {
+      counts[ep] = ids.length;
+    }
+    renderVoteResults(counts);
+  } else {
+    votePanel.classList.add('hidden');
+  }
+});
+
+socket.on('voteUpdate', ({ votes }) => {
+  renderVoteResults(votes);
 });
 
 socket.on('playerLeft', ({ playerId }) => {

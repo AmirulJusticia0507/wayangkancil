@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 // ---------- Room management ----------
-// rooms: Map<roomId, { players: Map<socket.id, playerData>, createdAt, episodeId }>
+// rooms: Map<roomId, { players: Map<socket.id, playerData>, createdAt, episodeId, votes }>
 const rooms = new Map();
 
 function generateRoomId() {
@@ -33,6 +33,7 @@ function addPlayerToRoom(roomId, socketId, playerData) {
     room = {
       players: new Map(),
       createdAt: Date.now(),
+      votes: {}, // episodeId -> count
     };
     rooms.set(roomId, room);
   }
@@ -74,6 +75,7 @@ function getRoomState(roomId) {
   return {
     roomId,
     episodeId: room.episodeId || null,
+    votes: room.votes || {},
     playerCount: room.players.size,
     players: Array.from(room.players.entries()).map(([id, p]) => ({
       id,
@@ -162,6 +164,36 @@ io.on('connection', (socket) => {
     console.log(`${playerName} joined room ${roomId}${episodeId ? ` (episode: ${episodeId})` : ''}`);
   });
 
+  socket.on('voteEpisode', ({ episodeId }) => {
+    const roomId = socket.data.roomId;
+    if (!roomId) return;
+
+    const room = rooms.get(roomId);
+    if (!room) return;
+
+    // Hapus vote sebelumnya dari pemain ini (satu pemain satu vote)
+    for (const ep of Object.keys(room.votes)) {
+      room.votes[ep] = room.votes[ep].filter((id) => id !== socket.id);
+      if (room.votes[ep] === 0) delete room.votes[ep];
+    }
+
+    // Tambah vote baru
+    if (!room.votes[episodeId]) room.votes[episodeId] = [];
+    if (!room.votes[episodeId].includes(socket.id)) {
+      room.votes[episodeId].push(socket.id);
+    }
+
+    // Hitung jumlah vote per episode
+    const voteCounts = {};
+    for (const [ep, ids] of Object.entries(room.votes)) {
+      voteCounts[ep] = ids.length;
+    }
+
+    io.to(roomId).emit('roomState', getRoomState(roomId));
+    io.to(roomId).emit('voteUpdate', { votes: voteCounts });
+    console.log(`${socket.data.playerName} voted for ${episodeId} in room ${roomId}`);
+  });
+
   socket.on('playerMoved', ({ x, y, direction, actionState }) => {
     const roomId = socket.data.roomId;
     if (!roomId) return;
@@ -228,9 +260,21 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (!room || !room.players.get(socket.id)?.isHost) return;
 
+    // Tentukan episode pemenang voting (banyak suara)
+    let winningEpisode = room.episodeId || null;
+    let maxVotes = 0;
+    if (room.votes && Object.keys(room.votes).length > 0) {
+      for (const [ep, ids] of Object.entries(room.votes)) {
+        if (ids.length > maxVotes) {
+          maxVotes = ids.length;
+          winningEpisode = ep;
+        }
+      }
+    }
+
     io.to(roomId).emit('gameStarted', {
       roomId,
-      episodeId: room.episodeId || null,
+      episodeId: winningEpisode,
     });
   });
 
