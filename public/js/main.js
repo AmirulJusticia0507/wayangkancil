@@ -101,6 +101,88 @@ function isEpisodeCompleted(episodeId) {
 
 loadStoryProgress();
 
+// ---------- Heart / Hubungan NPC (Phase 8.5) ----------
+const HEART_STORAGE_KEY = 'wayangkancil_hearts';
+const HEART_CHARACTERS = ['kancil', 'pak-tani', 'macan', 'buaya', 'siput', 'serigala'];
+let hearts = {}; // { character: 0-100 }
+
+function defaultHearts() {
+  const h = {};
+  for (const c of HEART_CHARACTERS) h[c] = 50;
+  return h;
+}
+
+function loadHearts() {
+  try {
+    const raw = localStorage.getItem(HEART_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      hearts = { ...defaultHearts(), ...parsed };
+    } else {
+      hearts = defaultHearts();
+    }
+  } catch (e) {
+    hearts = defaultHearts();
+  }
+}
+
+function saveHearts() {
+  try {
+    localStorage.setItem(HEART_STORAGE_KEY, JSON.stringify(hearts));
+  } catch (e) {
+    // silent
+  }
+}
+
+function modifyHeart(character, delta) {
+  if (!HEART_CHARACTERS.includes(character)) return;
+  hearts[character] = Math.max(0, Math.min(100, (hearts[character] || 50) + delta));
+  saveHearts();
+}
+
+function getHeart(character) {
+  return hearts[character] || 50;
+}
+
+function getHeartLabel(value) {
+  if (value >= 80) return 'Sangat Dekat';
+  if (value >= 60) return 'Dekat';
+  if (value >= 40) return 'Netral';
+  if (value >= 20) return 'Jauh';
+  return 'Sangat Jauh';
+}
+
+loadHearts();
+
+// Tampilkan status hati di lobby (disetelah elemen DOM siap)
+function renderHeartStatus() {
+  const panel = document.querySelector('.lobby-panel');
+  if (!panel || document.getElementById('heartStatus')) return;
+  const box = document.createElement('div');
+  box.id = 'heartStatus';
+  box.className = 'mt-6 p-4 bg-black/40 border border-yellow-500/20 rounded-xl text-center';
+  box.innerHTML = `
+    <div class="text-xs text-yellow-400 font-bold font-mono mb-2 uppercase">Hubungan NPC (Hati)</div>
+    <div class="flex justify-center gap-4 text-xs">
+      ${HEART_CHARACTERS.map((c) => `
+        <div class="flex flex-col items-center">
+          <span class="text-gray-400 capitalize mb-1">${c}</span>
+          <span class="font-mono text-yellow-300">${getHeart(c)}</span>
+          <span class="text-[10px] text-gray-500">(${getHeartLabel(getHeart(c))})</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  panel.appendChild(box);
+}
+
+const heartRenderTimer = setInterval(() => {
+  if (document.querySelector('.lobby-panel')) {
+    clearInterval(heartRenderTimer);
+    renderHeartStatus();
+  }
+}, 300);
+
 // ---------- Episode selection (Phase 6) ----------
 function populateEpisodes() {
   const episodes = getAllEpisodes();
@@ -495,6 +577,18 @@ function showPiwulangScreen(ep, choices = []) {
   const endingKey = computeEnding(choices);
   markEpisodeCompleted(ep.id, endingKey);
 
+  // Hubungan NPC berubah berdasarkan ending (Phase 8.5)
+  if (endingKey === 'clever' || endingKey === 'peace') {
+    modifyHeart('kancil', 10);
+    modifyHeart('pak-tani', 5);
+  } else if (endingKey === 'force') {
+    modifyHeart('kancil', -5);
+    modifyHeart('macan', -10);
+  } else if (endingKey === 'sad') {
+    modifyHeart('kancil', -10);
+    modifyHeart('buaya', -5);
+  }
+
   piwulangTitle.textContent = `Piwulang — ${ep.title}`;
   piwulangStory.textContent = ep.story;
   piwulangMoral.textContent = ep.moral;
@@ -641,6 +735,9 @@ socket.on('itemCollected', ({ playerId, playerName, itemId, score }) => {
     hudScore.textContent = score;
     showStatus(`${playerName} mengambil timun (+10)`, false);
     sound.playSfx('collect');
+
+    // Timun dibudidayakan Pak Tani -> hubungan lebih baik (Phase 8.5)
+    modifyHeart('pak-tani', 5);
   } else {
     // Tampilkan informasi pemain lain juga bisa, tapi HUD utama milik lokal
     console.log(`${playerName} collected item ${itemId}`);
