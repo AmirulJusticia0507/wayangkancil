@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wayang Kancil Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+
+  <!-- Lobby / Menu -->
+  <div id="lobby" class="fixed inset-0 z-10 flex flex-col items-center justify-center bg-cover bg-center" style="background-image: url('/assets/background/kelir-bg.png');">
+    <h1 class="text-6xl font-black text-yellow-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] mb-8">Wayang Kancil</h1>
+
+    <div class="bg-black/60 backdrop-blur-sm p-8 rounded-xl border border-yellow-500/30 shadow-[0_0_30px_rgba(255,213,79,0.2)] w-full max-w-md">
+      <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center">Lobby Game</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Nama Pemain</label>
+          <input type="text" id="playerName" placeholder="Masukkan nama..." class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Karakter</label>
+          <select id="characterSelect" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500">
+            <option value="kancil">Si Kancil</option>
+            <option value="pak-tani">Pak Tani</option>
+            <option value="macan">Macan</option>
+            <option value="buaya">Buaya</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Room ID</label>
+          <input type="text" id="roomId" placeholder="Contoh: kancil-123" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-yellow-500" />
+        </div>
+
+        <button id="joinBtn" class="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded shadow-[0_0_15px_rgba(255,213,79,0.4)] transition">
+          Masuk ke Room
+        </button>
+
+        <p id="statusMsg" class="text-xs text-yellow-200 text-center mt-3 hidden"></p>
+      </div>
+    </div>
+
+    <div class="mt-8 text-sm text-gray-400 text-center">
+      Mode: P2P Chase & Outsmart / Dalang Mode
+    </div>
+  </div>
+
+  <!-- Game Canvas (hidden by default) -->
+  <div id="gameContainer" class="fixed inset-0 z-20 hidden bg-black">
+    <div class="relative w-full h-full">
+      <canvas id="gameCanvas" class="block w-full h-full"></canvas>
+
+      <!-- HUD -->
+      <div class="absolute top-4 left-4 right-4 flex justify-between items-start z-30 pointer-events-none">
+        <div class="pointer-events-auto bg-black/60 backdrop-blur px-4 py-2 rounded border border-yellow-500/30">
+          <div class="text-xs text-yellow-400 font-mono">Skor: <span id="hudScore">0</span></div>
+          <div class="text-xs text-yellow-400 font-mono">Waktu: <span id="hudTimer">60</span>s</div>
+        </div>
+
+        <div class="pointer-events-auto bg-black/60 backdrop-blur px-4 py-2 rounded border border-yellow-500/30 text-center">
+          <div class="text-xs text-yellow-400 font-mono">Room: <span id="hudRoom">-</span></div>
+          <div class="text-xs text-yellow-400 font-mono">Karakter: <span id="hudCharacter">-</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="gameOver" class="fixed inset-0 z-40 hidden flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm">
+    <h2 class="text-4xl font-black text-red-400 mb-4 drop-shadow-[0_0_15px_rgba(255,0,0,0.5)]">GAME OVER</h2>
+    <div id="finalScores" class="text-xl text-yellow-300 mb-6"></div>
+    <div id="moralStory" class="max-w-lg text-center text-gray-300 italic mb-8"></div>
+    <button id="playAgainBtn" class="px-8 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded shadow-[0_0_15px_rgba(255,213,79,0.4)] transition">
+      Main Lagi
+    </button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
