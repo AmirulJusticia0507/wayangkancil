@@ -32,7 +32,7 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 ## Phase 7: Piwulang, Multiple Endings & Multiplayer Story Voting
 - [x] [DONE] Add dedicated piwulang screen per story after narrative ends.
 - [x] [DONE] Implement multiple endings based on player choices (cerdas / paksa / damai).
-- [ ] Add story progress tracking (localStorage).
+- [x] [DONE] Add story progress tracking (localStorage).
 - [ ] Implement multiplayer story voting (Dalang mode).
 
 ## Aturan Wajib
