@@ -54,6 +54,7 @@ let narrative = null;
 let score = 0;
 let boostUntil = 0;
 let lastAbility = 0;
+let playerChoices = []; // { scene, choice, effect }
 
 // ---------- Episode selection (Phase 6) ----------
 function populateEpisodes() {
@@ -171,8 +172,11 @@ function startNarrative(episodeId) {
   const scenes = buildNarrativeScenes(ep);
 
   narrative.loadScenes(scenes);
+  narrative.onChoice = (choice, scene) => {
+    playerChoices.push({ scene: scene.id || scene.speaker, choice: choice.text, effect: choice.effect || choice.text });
+  };
   narrative.onComplete = () => {
-    showPiwulangScreen(ep);
+    showPiwulangScreen(ep, playerChoices);
   };
   narrative.start(0);
 }
@@ -212,38 +216,74 @@ function buildNarrativeScenes(ep) {
     },
   ];
 
-  // Untuk episode negosiasi (ep-5), tambah pilihan
-  if (ep.id === 'ep-5') {
-    scenes.push({
+  // Adegan pilihan untuk semua episode (Phase 7.2 Multiple Endings)
+  const choiceScenes = {
+    'ep-1': {
+      speaker: 'Dalang',
+      text: 'Kancil sudah di tepi seberang. Bagaimana caranya melampi para buaya?',
+      puppets: [
+        { label: 'Si Kancil', x: 30, y: 60, flip: false },
+        { label: 'Buaya', x: 70, y: 60, flip: true },
+      ],
+      choices: [
+        { text: 'Boorkan para buaya dengan cerita daging segar', effect: 'clever' },
+        { text: 'Lompat langsung dan berusaha melarikan diri', effect: 'force' },
+      ],
+    },
+    'ep-2': {
+      speaker: 'Dalang',
+      text: 'Harimau siap menyerang. Kancil harus memilih trik atau pertarungan?',
+      puppets: [
+        { label: 'Si Kancil', x: 30, y: 60, flip: false },
+        { label: 'Macan', x: 70, y: 60, flip: true },
+      ],
+      choices: [
+        { text: 'Gunakan ilusi gong dan sabuk Raja Sulaiman', effect: 'clever' },
+        { text: 'Hadapi Harimau dengan bergegas menyerang', effect: 'force' },
+      ],
+    },
+    'ep-3': {
+      speaker: 'Dalang',
+      text: 'Lomba lari dimulai. Kancil berlari kencang atau menunggu strategi?',
+      puppets: [
+        { label: 'Si Kancil', x: 30, y: 60, flip: false },
+        { label: 'Siput', x: 70, y: 60, flip: true },
+      ],
+      choices: [
+        { text: 'Berlari kencang secepat mungkin', effect: 'force' },
+        { text: 'Terima ajakan kerja sama dari Siput', effect: 'peace' },
+      ],
+    },
+    'ep-4': {
+      speaker: 'Dalang',
+      text: 'Serigala ingin memakan Kerbau. Kancil sebagai hakim, apa keputusannya?',
+      puppets: [
+        { label: 'Si Kancil', x: 30, y: 60, flip: false },
+        { label: 'Serigala', x: 70, y: 60, flip: true },
+      ],
+      choices: [
+        { text: 'Panggil rapat hakim dan ulang kejadian', effect: 'peace' },
+        { text: 'Biarkan Serigala memakan Kerbau', effect: 'force' },
+      ],
+    },
+    'ep-5': {
       speaker: 'Kancil (Hakim)',
       text: 'Harimau dan Gajah, kamu berdua berselisih tentang sumber air. Apa pilihan terbaik untuk hutan?',
-      bgColor: ep.bgColor,
       puppets: [
         { label: 'Si Kancil', x: 25, y: 60, flip: false },
         { label: 'Macan', x: 45, y: 60, flip: true },
         { label: 'Gajah', x: 70, y: 60, flip: false },
       ],
       choices: [
-        { text: 'Berikan air lebih kepada Gajah karena ukurannya besar', nextScene: 4 },
-        { text: 'Bagi air sama rata untuk semua hewan', nextScene: 5 },
-        { text: 'Biarkan yang kuat mengambil semua air', nextScene: 6 },
+        { text: 'Berikan air lebih kepada Gajah karena ukurannya besar', effect: 'force' },
+        { text: 'Bagi air sama rata untuk semua hewan', effect: 'peace' },
+        { text: 'Biarkan yang kuat mengambil semua air', effect: 'force' },
       ],
-    });
-    scenes.push({
-      speaker: 'Narasi',
-      text: 'Gajah merasa tidak puas dan hutan menjadi tidak damai. Perang pecah.',
-      bgColor: ep.bgColor,
-    });
-    scenes.push({
-      speaker: 'Narasi',
-      text: 'Semua hewan setuju. Sumber air dibagi adil, hutan kembali damai.',
-      bgColor: ep.bgColor,
-    });
-    scenes.push({
-      speaker: 'Narasi',
-      text: 'Kekakuan memenangi sengketa. Hutan hancur, tidak ada pemenang.',
-      bgColor: ep.bgColor,
-    });
+    },
+  };
+
+  if (choiceScenes[ep.id]) {
+    scenes.push(choiceScenes[ep.id]);
   }
 
   // Adegan penutup dengan piwulang
@@ -259,8 +299,8 @@ function buildNarrativeScenes(ep) {
   return scenes;
 }
 
-// ---------- Piwulang Screen (Phase 7.1) ----------
-function showPiwulangScreen(ep) {
+// ---------- Piwulang Screen (Phase 7.1 + 7.2 Multiple Endings) ----------
+function showPiwulangScreen(ep, choices = []) {
   narrativeScene.classList.add('hidden');
   piwulangScreen.classList.remove('hidden');
 
@@ -268,7 +308,32 @@ function showPiwulangScreen(ep) {
   piwulangStory.textContent = ep.story;
   piwulangMoral.textContent = ep.moral;
 
-  // Ringkasan akhir berdasarkan episode
+  // Hitung ending berdasarkan pilihan pemain
+  let clever = 0, force = 0, peace = 0;
+  for (const c of choices) {
+    const eff = (c.effect || '').toLowerCase();
+    if (eff.includes('cerdik') || eff.includes('clever') || eff.includes('bluff') || eff.includes('illusion') || eff.includes('mediate') || eff.includes('negotiate') || eff.includes('damai')) {
+      clever++;
+      peace++;
+    } else if (eff.includes('paksa') || eff.includes('force') || eff.includes('brave') || eff.includes('serang') || eff.includes('langsung')) {
+      force++;
+    } else if (eff.includes('damai') || eff.includes('peace') || eff.includes('berbicara') || eff.includes('negotiate')) {
+      peace++;
+    }
+  }
+
+  let endingKey = 'neutral';
+  if (clever > force && clever >= peace) endingKey = 'clever';
+  else if (force > clever && force >= peace) endingKey = 'force';
+  else if (peace > clever && peace > force) endingKey = 'peace';
+
+  const endings = {
+    clever: 'Kancil menang melalui kecerdikan dan trik. Hutan menghormati akal di atas kekerasan.',
+    force: 'Kancil berhasil melalui keberanian dan confrontasi langsung. Namun hutan tetap penamakan ancaman.',
+    peace: 'Kancil menyelesaikan konflik melalui dialog dan perdamaian. Harmoni hutan terjaga.',
+    neutral: 'Kancil menemukan jalan tengah antara akal dan keberanian.',
+  };
+
   const summaries = {
     'ep-1': 'Kancil berhasil menyeberangi sungai dengan membohongi para buaya. Buah-buahan di seberang tercapai melalui kecerdikan, bukan kekerasan.',
     'ep-2': 'Kancil mengakali Harimau dua kali dengan ilusi gong dan sabuk palsu. Penampilan boleh menipu, tetapi akal menyelamatkan.',
@@ -276,7 +341,8 @@ function showPiwulangScreen(ep) {
     'ep-4': 'Kancil menjadi hakim dan membalas kebaikan Kerbau dengan menindih Serigala yang tidak berterima kasih. Pilih siapa yang dipercaya.',
     'ep-5': 'Kancil menyelesaikan sengketa Harimau dan Gajah melalui dialog damai. Tanpa pertumpahan darah, hutan tetap harmonis.',
   };
-  piwulangEnding.textContent = summaries[ep.id] || 'Cerita selesai. Akal adalah senjata terampuh.';
+
+  piwulangEnding.innerHTML = `<strong>Akhir (${endingKey}):</strong> ${endings[endingKey]}<br><br>${summaries[ep.id] || 'Cerita selesai.'}`;
 }
 
 piwulangStartBtn.addEventListener('click', () => {
