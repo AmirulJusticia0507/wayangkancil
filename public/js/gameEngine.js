@@ -25,6 +25,10 @@ export default class GameEngine {
     this.defaultItemType = 'cucumber'; // jenis item default, diatur oleh musim (Phase 8.7)
     this.currentSeason = null; // { id, label, itemTypes, spawnRateMultiplier, itemValueMultiplier, bgColor, icon }
 
+    // Gambar wayang (PNG) — kancil & buaya (Phase 8.10)
+    this.puppetImages = {};
+    this.loadPuppetImages();
+
     // Loop
     this.lastTime = 0;
     this.animId = null;
@@ -42,6 +46,20 @@ export default class GameEngine {
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+  }
+
+  // ---------- Load gambar wayang (PNG) ----------
+  loadPuppetImages() {
+    const sources = {
+      kancil: '/assets/puppets/kancil.png',
+      buaya: '/assets/puppets/buaya.png',
+    };
+    for (const [name, src] of Object.entries(sources)) {
+      const img = new Image();
+      img.onload = () => { this.puppetImages[name] = img; };
+      img.onerror = () => { console.warn('Gagal load gambar wayang:', name, src); };
+      img.src = src;
+    }
   }
 
   setRoom(roomId) {
@@ -152,6 +170,25 @@ export default class GameEngine {
   }
 
   drawWayangSilhouette(ctx, p, now) {
+    // Gunakan gambar PNG jika tersedia (Phase 8.10)
+    const img = this.puppetImages[p.character];
+    if (img) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      if (p.direction === 'left') ctx.scale(-1, 1);
+
+      const size = p.character === 'kancil' ? 64 : 80;
+      ctx.drawImage(img, -size / 2, -size, size, size);
+
+      // Nama pemain di bawah gambar
+      ctx.restore();
+      ctx.fillStyle = '#fff';
+      ctx.font = '13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.name, p.x, p.y - size - 6);
+      return;
+    }
+
     ctx.save();
     ctx.translate(p.x, p.y);
 
