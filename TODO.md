@@ -23,17 +23,20 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Integrate Gamelan ambient sound effects.
 - [x] [DONE] Add end-game screen displaying traditional Wayang Kancil moral lessons (*piwulang*).
 
-## Phase 6: Episode & Story Mode
-- [ ] Define episode data structure (story, objective, ability, moral).
-- [ ] Add episode selection UI in lobby.
-- [ ] Implement Episode 1: Kancil & Buaya (river crossing).
-- [ ] Implement Episode 2: Kancil & Harimau (gong & sabuk trick).
-- [ ] Implement Episode 3: Kancil & Siput (race with echo).
-- [ ] Add story intro and outro screens with *piwulang*.
-- [ ] Episode-specific win conditions and abilities.
+## Phase 6: Cerita / Lakon Mode (Dalang / Storyteller)
+- [ ] Create story data structure (Kancil & Buaya, Kancil & Harimau, Kancil & Siput, Kancil & Kerbau, Hakim Harimau & Gajah).
+- [ ] Build narrative scene engine (dialogue, choices, puppet display).
+- [ ] Implement story selection screen in lobby.
+- [ ] Integrate story mode into main game flow.
+
+## Phase 7: Piwulang, Multiple Endings & Multiplayer Story Voting
+- [ ] Add moral lesson (*piwulang*) screen per story.
+- [ ] Implement multiple endings based on player choices.
+- [ ] Add story progress tracking.
+- [ ] Implement multiplayer story voting (Dalang mode).
 
 ## Aturan Wajib
-Setiap checklist di atas yang sudah dicentang (selesai dikerjakan):
+Setiap checklist di atas yang sudah selesai dikerjakan:
 
 ```bash
 git add .
