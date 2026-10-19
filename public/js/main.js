@@ -275,6 +275,9 @@ function playNextSoloEpisode() {
   if (ep) showStatus(`Memulai cerita: ${ep.title} (${soloStoryIndex}/${soloStoryQueue.length})`, false);
 }
 
+// Expose startSoloStory to window for inline onclick fallback
+window.startSoloStory = startSoloStory;
+
 // Attach event listener
 const btn = document.getElementById('storyModeBtn');
 if (btn) {

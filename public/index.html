@@ -64,7 +64,7 @@
         <div class="lobby-divider"></div>
 
         <!-- Story Mode (full story, episode 1 sampai terakhir) -->
-        <button id="storyModeBtn" class="w-full btn-primary-cinematic">
+        <button id="storyModeBtn" class="w-full btn-primary-cinematic" onclick="if(typeof startSoloStory==='function')startSoloStory(document.getElementById('episodeSelect').value||null)">
           📖 Story Mode
         </button>
 
@@ -192,6 +192,6 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/pwa-register.js" defer></script>
-  <script type="module" src="/js/main.js"></script>
+  <script type="module" src="/js/main.js?v=5"></script>
 </body>
 </html>
