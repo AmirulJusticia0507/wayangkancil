@@ -43,6 +43,14 @@ export default class WorldEngine {
 
     // Kamera
     this.camera = { x: 0, y: 0 };
+    this.zoom = 1.0;
+    this.minZoom = 0.5;
+    this.maxZoom = 2.0;
+
+    // Drag state
+    this.isDragging = false;
+    this.dragStart = { x: 0, y: 0 };
+    this.cameraStart = { x: 0, y: 0 };
 
     // NPC
     this.npcs = [];
@@ -75,8 +83,19 @@ export default class WorldEngine {
 
     this.resize = this.resize.bind(this);
     this.loop = this.loop.bind(this);
+    this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleMouseUp = this.handleMouseUp.bind(this);
+    this.handleWheel = this.handleWheel.bind(this);
     window.addEventListener('resize', this.resize);
     this.resize();
+
+    // Mouse drag & zoom
+    this.canvas.addEventListener('mousedown', this.handleMouseDown);
+    this.canvas.addEventListener('mousemove', this.handleMouseMove);
+    this.canvas.addEventListener('mouseup', this.handleMouseUp);
+    this.canvas.addEventListener('mouseleave', this.handleMouseUp);
+    this.canvas.addEventListener('wheel', this.handleWheel, { passive: false });
   }
 
   resize() {
@@ -202,6 +221,56 @@ export default class WorldEngine {
     this.keys[code] = false;
   }
 
+  // ---------- Mouse drag & zoom ----------
+  handleMouseDown(e) {
+    this.isDragging = true;
+    this.dragStart = { x: e.clientX, y: e.clientY };
+    this.cameraStart = { x: this.camera.x, y: this.camera.y };
+    this.canvas.style.cursor = 'grabbing';
+  }
+
+  handleMouseMove(e) {
+    if (!this.isDragging) return;
+    const dx = (e.clientX - this.dragStart.x) / this.zoom;
+    const dy = (e.clientY - this.dragStart.y) / this.zoom;
+    this.camera.x = this.cameraStart.x - dx;
+    this.camera.y = this.cameraStart.y - dy;
+  }
+
+  handleMouseUp(e) {
+    if (this.isDragging && e) {
+      // Check if click was on menu button (not a drag)
+      const dx = Math.abs(e.clientX - this.dragStart.x);
+      const dy = Math.abs(e.clientY - this.dragStart.y);
+      if (dx < 5 && dy < 5) {
+        const btn = this.menuButton;
+        if (e.clientX >= btn.x && e.clientX <= btn.x + btn.w &&
+            e.clientY >= btn.y && e.clientY <= btn.y + btn.h) {
+          if (this.onMenuClick) this.onMenuClick();
+        }
+      }
+    }
+    this.isDragging = false;
+    this.canvas.style.cursor = 'grab';
+  }
+
+  handleWheel(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom + delta));
+    
+    // Zoom towards mouse position
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    const worldX = (mouseX / this.zoom) + this.camera.x;
+    const worldY = (mouseY / this.zoom) + this.camera.y;
+    
+    this.zoom = newZoom;
+    
+    this.camera.x = worldX - (mouseX / this.zoom);
+    this.camera.y = worldY - (mouseY / this.zoom);
+  }
+
   // ---------- Interaksi ----------
   interact() {
     if (this.nearbyNpc) {
@@ -298,8 +367,8 @@ export default class WorldEngine {
       p.frameTimer = 0;
     }
 
-    const camX = p.x - this.canvas.width / 2;
-    const camY = p.y - this.canvas.height / 2;
+    const camX = p.x - (this.canvas.width / 2) / this.zoom;
+    const camY = p.y - (this.canvas.height / 2) / this.zoom;
     this.camera.x += (camX - this.camera.x) * 0.1;
     this.camera.y += (camY - this.camera.y) * 0.1;
 
@@ -329,11 +398,15 @@ export default class WorldEngine {
     ctx.fillStyle = '#1a2a1a';
     ctx.fillRect(0, 0, w, h);
 
+    // Apply zoom to entire world rendering
+    ctx.save();
+    ctx.scale(this.zoom, this.zoom);
+
     // Gambar tile
     const startX = Math.floor(this.camera.x / this.tileSize);
     const startY = Math.floor(this.camera.y / this.tileSize);
-    const endX = startX + Math.ceil(w / this.tileSize) + 1;
-    const endY = startY + Math.ceil(h / this.tileSize) + 1;
+    const endX = startX + Math.ceil(w / (this.tileSize * this.zoom)) + 2;
+    const endY = startY + Math.ceil(h / (this.tileSize * this.zoom)) + 2;
 
     for (let ty = startY; ty < endY; ty++) {
       for (let tx = startX; tx < endX; tx++) {
@@ -341,6 +414,7 @@ export default class WorldEngine {
         const tile = this.map[ty][tx];
         const px = tx * this.tileSize - this.camera.x;
         const py = ty * this.tileSize - this.camera.y;
+        const ts = this.tileSize;
 
         // Grass 3D effect
         if (tile === 0) {
@@ -447,18 +521,21 @@ export default class WorldEngine {
     // Gambar pemain (kancil)
     this.drawPlayer(ctx);
 
-    // Overlay siang/malam
+    // Restore zoom for screen-space UI
+    ctx.restore();
+
+    // Overlay siang/malam (screen space)
     this.drawDayNightOverlay(ctx, w, h);
 
-    // HUD
+    // HUD (screen space)
     this.drawHUD(ctx, w, h);
 
-    // Dialogue box
+    // Dialogue box (screen space)
     if (this.dialogueBox) {
       this.drawDialogue(ctx, w, h);
     }
 
-    // Menu button
+    // Menu button (screen space)
     this.drawMenuButton(ctx, w, h);
   }
 

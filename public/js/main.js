@@ -325,10 +325,17 @@ function startOpenWorld() {
 
   // Inisialisasi world engine
   const canvas = document.getElementById('gameCanvas');
+  canvas.style.cursor = 'grab';
   worldEngine = new WorldEngine(canvas, canvas.getContext('2d'));
   worldEngine.createDefaultMap();
 
   // Callback ketika bicara dengan NPC yang punya cerita
+  worldEngine.onMenuClick = () => {
+    if (confirm('Kembali ke halaman awal?')) {
+      stopOpenWorld();
+    }
+  };
+
   worldEngine.onNpcTalk = (npc) => {
     // Pause world engine
     if (worldEngine) worldEngine.stop();
