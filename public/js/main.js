@@ -848,7 +848,7 @@ function buildNarrativeScenes(ep) {
         { label: 'Buaya', x: 70, y: 60, flip: true },
       ],
       choices: [
-        { text: 'Boorkan para buaya dengan cerita daging segar', effect: 'clever' },
+        { text: 'Bohongi para buaya dengan cerita daging segar', effect: 'clever' },
         { text: 'Lompat langsung dan berusaha melarikan diri', effect: 'force' },
       ],
     },
