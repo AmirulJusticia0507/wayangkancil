@@ -56,13 +56,50 @@ let boostUntil = 0;
 let lastAbility = 0;
 let playerChoices = []; // { scene, choice, effect }
 
+// ---------- Story Progress (Phase 7.3) ----------
+const STORAGE_KEY = 'wayangkancil_progress';
+let storyProgress = {}; // { episodeId: { completed: boolean, completedAt: string, ending: string } }
+
+function loadStoryProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) storyProgress = JSON.parse(raw);
+  } catch (e) {
+    storyProgress = {};
+  }
+}
+
+function saveStoryProgress() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(storyProgress));
+  } catch (e) {
+    // silent
+  }
+}
+
+function markEpisodeCompleted(episodeId, ending) {
+  storyProgress[episodeId] = {
+    completed: true,
+    completedAt: new Date().toISOString(),
+    ending: ending || 'neutral',
+  };
+  saveStoryProgress();
+}
+
+function isEpisodeCompleted(episodeId) {
+  return !!storyProgress[episodeId]?.completed;
+}
+
+loadStoryProgress();
+
 // ---------- Episode selection (Phase 6) ----------
 function populateEpisodes() {
   const episodes = getAllEpisodes();
   for (const ep of episodes) {
     const opt = document.createElement('option');
     opt.value = ep.id;
-    opt.textContent = `${ep.title} — ${ep.subtitle}`;
+    const done = isEpisodeCompleted(ep.id) ? ' ✅' : '';
+    opt.textContent = `${ep.title} — ${ep.subtitle}${done}`;
     episodeSelect.appendChild(opt);
   }
 }
@@ -300,9 +337,33 @@ function buildNarrativeScenes(ep) {
 }
 
 // ---------- Piwulang Screen (Phase 7.1 + 7.2 Multiple Endings) ----------
+function computeEnding(choices = []) {
+  let clever = 0, force = 0, peace = 0;
+  for (const c of choices) {
+    const eff = (c.effect || '').toLowerCase();
+    if (eff.includes('cerdik') || eff.includes('clever') || eff.includes('bluff') || eff.includes('illusion') || eff.includes('mediate') || eff.includes('negotiate') || eff.includes('damai')) {
+      clever++;
+      peace++;
+    } else if (eff.includes('paksa') || eff.includes('force') || eff.includes('brave') || eff.includes('serang') || eff.includes('langsung')) {
+      force++;
+    } else if (eff.includes('damai') || eff.includes('peace') || eff.includes('berbicara') || eff.includes('negotiate')) {
+      peace++;
+    }
+  }
+
+  if (clever > force && clever >= peace) return 'clever';
+  if (force > clever && force >= peace) return 'force';
+  if (peace > clever && peace > force) return 'peace';
+  return 'neutral';
+}
+
 function showPiwulangScreen(ep, choices = []) {
   narrativeScene.classList.add('hidden');
   piwulangScreen.classList.remove('hidden');
+
+  // Tandai episode selesai (Phase 7.3)
+  const endingKey = computeEnding(choices);
+  markEpisodeCompleted(ep.id, endingKey);
 
   piwulangTitle.textContent = `Piwulang — ${ep.title}`;
   piwulangStory.textContent = ep.story;
