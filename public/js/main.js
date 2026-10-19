@@ -45,6 +45,9 @@ const hudCharacter = document.getElementById('hudCharacter');
 const hudScore = document.getElementById('hudScore');
 const hudTimer = document.getElementById('hudTimer');
 
+const leaderboard = document.getElementById('leaderboard');
+const leaderboardList = document.getElementById('leaderboardList');
+
 const finalScores = document.getElementById('finalScores');
 const moralStory = document.getElementById('moralStory');
 const playAgainBtn = document.getElementById('playAgainBtn');
@@ -199,6 +202,28 @@ function renderPlayers(players) {
     `;
     playersList.appendChild(el);
   }
+}
+
+// ---------- Leaderboard (Phase 8.2) ----------
+function renderLeaderboard(scores) {
+  if (!leaderboard || !leaderboardList || !scores) return;
+
+  leaderboard.classList.remove('hidden');
+
+  const entries = Object.entries(scores)
+    .map(([id, s]) => ({ id, ...s }))
+    .sort((a, b) => b.score - a.score);
+
+  leaderboardList.innerHTML = entries
+    .map((entry, index) => {
+      const isMe = entry.id === myPlayerId;
+      const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+      return `<div class="flex justify-between items-center ${isMe ? 'text-yellow-400 font-bold' : 'text-gray-300'}">
+        <span>${medal} ${entry.name}</span>
+        <span>${entry.score}</span>
+      </div>`;
+    })
+    .join('');
 }
 
 // ---------- Socket events ----------
@@ -535,10 +560,13 @@ function startGameAfterNarrative() {
   initGameEngine(myRoom);
 }
 
-socket.on('gameStateUpdate', ({ players, timer }) => {
+socket.on('gameStateUpdate', ({ players, scores, timer }) => {
   if (!engine) return;
 
   hudTimer.textContent = timer;
+
+  // Render leaderboard skor multiplayer (Phase 8.2)
+  renderLeaderboard(scores);
 
   // Sinkronisasi posisi pemain dari server (interpolasi di engine)
   for (const [id, state] of Object.entries(players)) {

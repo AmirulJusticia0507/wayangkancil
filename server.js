@@ -305,6 +305,7 @@ const gameStateInterval = setInterval(() => {
     if (room.players.size === 0) continue;
 
     const players = {};
+    const scores = {};
     for (const [id, p] of room.players.entries()) {
       players[id] = {
         x: p.x,
@@ -312,10 +313,17 @@ const gameStateInterval = setInterval(() => {
         direction: p.direction,
         actionState: p.actionState,
       };
+      scores[id] = {
+        name: p.playerName || p.name || id.slice(-4),
+        character: p.character,
+        score: p.score || 0,
+        isHost: p.isHost,
+      };
     }
 
     io.to(roomId).emit('gameStateUpdate', {
       players,
+      scores,
       timer: Math.floor((Date.now() - room.createdAt) / 1000),
     });
   }
