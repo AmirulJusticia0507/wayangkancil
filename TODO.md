@@ -40,6 +40,9 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [ ] Leaderboard skor multiplayer real-time.
 - [ ] Karakter & lakon wayang tambahan.
 - [ ] Animasi wayang kulit & transisi scene.
+- [ ] Sistem hati / hubungan NPC dengan karakter wayang (Kancil, Pak Tani, Macan, Buaya).
+- [ ] Kebun / peternakan sederhana di antar lakon cerita.
+- [ ] Sistem musim yang memengaruhi ketersediaan item di map.
 
 ## Aturan Wajib
 Setiap checklist di atas yang sudah selesai dikerjakan:
