@@ -91,6 +91,42 @@ menyelesaikan sengketa tanpa ada pertumpahan darah di hutan.`,
     bgColor: '#2d1b10', // dewan hutan
     enemyType: null, // no enemy, negotiation only
   },
+
+  'ep-6': {
+    id: 'ep-6',
+    title: 'Kancil dan Elang',
+    subtitle: 'Saat Kancil Jadi Makanan Elang',
+    story: `Saat Kancil melintas di atas lembah, seekor Elang raksasa melesat
+dari langit dan mencoba menangkapnya. Kancil yang terjatuh ke tanah bilang
+kepada Elang bahwa batuk badannya adalah "obat ajaib Raja Hutan" yang bisa
+menyembuhkan sakit Elang. Elang yang penasaran menahan nafsu makannya dan
+mendekatkan telinga — sampai Kancil lolos kabur.`,
+    objective: 'Hindari tangkapan Elang dengan menipu dia menggunakan kata-kata.',
+    ability: 'bluff',
+    abilityDesc: 'Buat Elang ragu-ragu dan berhenti menyerang sesaat',
+    winCondition: 'Survive until Elang menyerah',
+    moral: '"Kata-kata yang cerdik dapat menyelamatkan dari bahkan ancaman yang datang dari langit."',
+    bgColor: '#4a2e18', // langit lembah petang
+    enemyType: 'elang',
+  },
+
+  'ep-7': {
+    id: 'ep-7',
+    title: 'Kancil dan Beruang',
+    subtitle: 'Madu Palsu di Pohon Tua',
+    story: `Seekor Beruang gemuk dan malas mencari madu di hutan. Kancil
+menemukan Beruang di bawah pohon tua dan bilang bahwa di ujung cabang paling
+tinggi terdapat "madu terbaik di seluruh hutan" yang dijaga oleh lebah raksasa.
+Beruang yang gigih memanjat pohon, tapi malah terjebak di dahan lentur yang
+memukulkan. Kancil kemudian membagikan madu sebenarnya kepada hewan lain.`,
+    objective: 'Bantu hewan lain mendapatkan madu sambil menipu Beruang.',
+    ability: 'trickery',
+    abilityDesc: 'Spawn ilusi madu yang menarik perhatian Beruang',
+    winCondition: 'Beruang terlibur dan madu terbagi',
+    moral: '"Jangan biarkan keserakahan dan kecanduan membuatmu lupa akan bahaya di sekitar."',
+    bgColor: '#3a4a2a', // hutan tropis siang hari
+    enemyType: 'beruang',
+  },
 };
 
 export function getEpisode(episodeId) {

@@ -757,6 +757,8 @@ function initGameEngine(roomId) {
       if (myCharacter === 'macan') abilityId = 'teleport';
       if (myCharacter === 'buaya') abilityId = 'snap';
       if (myCharacter === 'pak-tani') abilityId = 'trap';
+      if (myCharacter === 'siput') abilityId = 'echo';
+      if (myCharacter === 'serigala') abilityId = 'howl';
 
       socket.emit('useAbility', { abilityId, targetPos: { x: me.targetX, y: me.targetY } });
 
@@ -840,6 +842,14 @@ function triggerAbilityEffect(data) {
 
     case 'trap': // Pak Tani: jala (visual saja di Phase 4)
       showStatus('Ability Pak Tani: Jala!', false);
+      break;
+
+    case 'echo': // Siput: suara tiruan, lawan bingung arah (visual saja)
+      showStatus('Ability Siput: Echo! Suara tiruan menyesatkan.', false);
+      break;
+
+    case 'howl': // Serigala: serangan suara, area fear (visual saja)
+      showStatus('Ability Serigala: Olololan! Area takutan.', false);
       break;
   }
 }

@@ -131,7 +131,28 @@ export default class GameEngine {
     const t = Math.sin(now * 0.004); // animasi joint halus
     const moving = p.actionState === 'moving';
 
-    // Kepala wayang (lonjong ke atas) dengan nod saat bergerak
+    // Karakter wayang berbeda — siluet disesuaikan (Phase 8.3)
+    if (p.character === 'siput') {
+      this.drawSiputSilhouette(ctx, s, t, moving);
+    } else if (p.character === 'serigala') {
+      this.drawSerigalaSilhouette(ctx, s, t, moving);
+    } else {
+      this.drawStandardSilhouette(ctx, s, t, moving);
+    }
+
+    ctx.restore();
+
+    // Nama pemain di bawah siluet
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'center';
+    const charScale = p.character === 'siput' ? 0.7 : p.character === 'serigala' ? 1.3 : 1;
+    ctx.fillText(p.name, p.x, p.y - s * 1.1 * charScale - 6);
+  }
+
+  // ---------- Siluet wayang standar (Kancil, Pak Tani, Macan, Buaya) ----------
+  drawStandardSilhouette(ctx, s, t, moving) {
+    // Kepala
     ctx.save();
     ctx.translate(0, -s * 0.55);
     ctx.rotate(moving ? t * 0.1 : 0);
@@ -141,7 +162,7 @@ export default class GameEngine {
     ctx.fill();
     ctx.restore();
 
-    // Lengan kiri (joint animation)
+    // Lengan kiri
     ctx.save();
     ctx.translate(-s * 0.3, s * 0.2);
     ctx.rotate(moving ? t * 0.5 : t * 0.1);
@@ -151,7 +172,7 @@ export default class GameEngine {
     ctx.fill();
     ctx.restore();
 
-    // Lengan kanan (joint animation, berseberangan dengan kiri)
+    // Lengan kanan
     ctx.save();
     ctx.translate(s * 0.3, s * 0.2);
     ctx.rotate(moving ? -t * 0.5 : -t * 0.1);
@@ -161,7 +182,7 @@ export default class GameEngine {
     ctx.fill();
     ctx.restore();
 
-    // Tubuh wayang (taper ke bawah)
+    // Tubuh
     ctx.beginPath();
     ctx.moveTo(-s * 0.35, s * 0.05);
     ctx.lineTo(s * 0.35, s * 0.05);
@@ -170,20 +191,100 @@ export default class GameEngine {
     ctx.closePath();
     ctx.fill();
 
-    // Tangan kanan saat moving (efek sentuhan)
+    // Tangan kanan saat moving
     if (moving) {
       ctx.beginPath();
       ctx.arc(s * 0.45, s * 0.35, s * 0.18, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
 
+  // ---------- Siluet Siput (kecil, lingkar, rahang di bawah) ----------
+  drawSiputSilhouette(ctx, s, t, moving) {
+    const ss = s * 0.65; // lebih kecil
+    // Kepala kecil
+    ctx.save();
+    ctx.translate(0, -ss * 0.5);
+    ctx.rotate(moving ? t * 0.05 : 0);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ss * 0.4, ss * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 
-    // Nama pemain di bawah siluet
-    ctx.fillStyle = '#fff';
-    ctx.font = '13px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(p.name, p.x, p.y - s * 1.1 - 6);
+    // Badan/lengan (simpel, melengkung)
+    ctx.save();
+    ctx.translate(-ss * 0.25, ss * 0.15);
+    ctx.rotate(moving ? t * 0.3 : t * 0.05);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ss * 0.12, ss * 0.28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(ss * 0.25, ss * 0.15);
+    ctx.rotate(moving ? -t * 0.3 : -t * 0.05);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ss * 0.12, ss * 0.28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Tubuh kerongkong (lingkar di bawah)
+    ctx.beginPath();
+    ctx.ellipse(0, ss * 0.55, ss * 0.5, ss * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ---------- Siluet Serigala (biasa, tubuh lonjong, tekad) ----------
+  drawSerigalaSilhouette(ctx, s, t, moving) {
+    const ss = s * 1.15; // lebih besar
+    // Kepala lonjong ke depan
+    ctx.save();
+    ctx.translate(0, -ss * 0.5);
+    ctx.rotate(moving ? t * 0.15 : 0);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ss * 0.5, ss * 0.75, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Lengan kiri (tegang)
+    ctx.save();
+    ctx.translate(-ss * 0.35, ss * 0.2);
+    ctx.rotate(moving ? t * 0.6 : t * 0.1);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ss * 0.18, ss * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Lengan kanan
+    ctx.save();
+    ctx.translate(ss * 0.35, ss * 0.2);
+    ctx.rotate(moving ? -t * 0.6 : -t * 0.1);
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ss * 0.18, ss * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Tubuh lebar dan tegak
+    ctx.beginPath();
+    ctx.moveTo(-ss * 0.4, ss * 0.05);
+    ctx.lineTo(ss * 0.4, ss * 0.05);
+    ctx.lineTo(ss * 0.55, ss * 1.0);
+    ctx.lineTo(-ss * 0.55, ss * 1.0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ekor serigala (mengunci di belakang)
+    if (moving) {
+      ctx.beginPath();
+      ctx.arc(-ss * 0.45, ss * 0.4, ss * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   drawItems(ctx) {
