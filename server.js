@@ -283,9 +283,15 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (!room || !room.players.has(socket.id)) return;
 
+    // Hitung nilai item berdasarkan musim aktif di room
+    const seasonId = getSeasonForRoom(room);
+    const seasonInfo = getSeasonInfo(seasonId);
+    const baseValue = 10;
+    const points = Math.floor(baseValue * (seasonInfo.itemValueMultiplier || 1));
+
     // Tambah skor pemain yang mengambil item
     const player = room.players.get(socket.id);
-    player.score = (player.score || 0) + 10;
+    player.score = (player.score || 0) + points;
 
     // Broadcast ke seluruh room agar semua client hapus item & update skor
     io.to(roomId).emit('itemCollected', {
@@ -293,9 +299,11 @@ io.on('connection', (socket) => {
       playerName: socket.data.playerName,
       itemId,
       score: player.score,
+      points,
+      season: seasonId,
     });
 
-    console.log(`${socket.data.playerName} collected item ${itemId} in room ${roomId}`);
+    console.log(`${socket.data.playerName} collected item ${itemId} in room ${roomId} (+${points} pts, season ${seasonId})`);
   });
 
   socket.on('useAbility', ({ abilityId, targetPos }) => {

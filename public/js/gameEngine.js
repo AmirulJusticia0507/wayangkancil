@@ -23,6 +23,7 @@ export default class GameEngine {
     this.roomId = null;
     this.parallaxOffset = 0; // untuk gerakan latar parallax
     this.defaultItemType = 'cucumber'; // jenis item default, diatur oleh musim (Phase 8.7)
+    this.currentSeason = null; // { id, label, itemTypes, spawnRateMultiplier, itemValueMultiplier, bgColor, icon }
 
     // Loop
     this.lastTime = 0;
@@ -49,6 +50,10 @@ export default class GameEngine {
 
   setItemType(itemType) {
     this.defaultItemType = itemType;
+  }
+
+  setSeason(seasonId, seasonInfo) {
+    this.currentSeason = { id: seasonId, ...seasonInfo };
   }
 
   addPlayer(id, { name, character, x, y }) {
@@ -126,6 +131,24 @@ export default class GameEngine {
     vignette.addColorStop(1, 'rgba(0,0,0,0.45)');
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, w, h);
+
+    // Overlay warna musim (Phase 8.7 — perbaikan dari prototype)
+    if (this.currentSeason && this.currentSeason.bgColor) {
+      const seasonOverlay = 0.12 + Math.sin(time * 0.002) * 0.04;
+      ctx.fillStyle = `${this.currentSeason.bgColor}${'0A'.repeat(Math.round(seasonOverlay * 255) / 255)}`;
+      // Use rgba for proper alpha
+      const rgb = this.hexToRgba(this.currentSeason.bgColor, seasonOverlay);
+      ctx.fillStyle = rgb;
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
+  // Helper: konversi hex ke rgba
+  hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
   }
 
   drawWayangSilhouette(ctx, p, now) {
@@ -311,6 +334,15 @@ export default class GameEngine {
       // Warna & bentuk bervariasi berdasarkan jenis item & musim (Phase 8.7)
       const style = ITEM_STYLES[type] || ITEM_STYLES.cucumber;
 
+      // Efek glow untuk item bonus hasil panen kebun (Phase 8.6)
+      if (item.farmBonus) {
+        const pulse = 0.7 + Math.sin(Date.now() * 0.005) * 0.3;
+        ctx.save();
+        ctx.shadowColor = style.highlight;
+        ctx.shadowBlur = 12 * pulse;
+        ctx.globalAlpha = 0.9;
+      }
+
       ctx.fillStyle = style.color;
       ctx.beginPath();
       if (type === 'cactus' || type === 'berry') {
@@ -329,6 +361,10 @@ export default class GameEngine {
       ctx.beginPath();
       ctx.arc(item.x - 2, item.y - 2, 3, 0, Math.PI * 2);
       ctx.fill();
+
+      if (item.farmBonus) {
+        ctx.restore();
+      }
     }
   }
 
@@ -342,6 +378,13 @@ export default class GameEngine {
     ctx.fillStyle = '#e5e7eb';
     ctx.font = '14px monospace';
     ctx.fillText(`Room: ${this.roomId || '-'}`, 32, 62);
+
+    // Indikator musim di canvas (Phase 8.7)
+    if (this.currentSeason) {
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`${this.currentSeason.icon} ${this.currentSeason.label}`, 32, 82);
+    }
   }
 
   // ---------- Interpolasi (lerp) ----------
@@ -500,7 +543,7 @@ export default class GameEngine {
   }
 
   // ---------- Items (cucumber / timun) ----------
-  spawnItems(count = 8, itemType = 'cucumber') {
+  spawnItems(count = 8, itemType = 'cucumber', farmBonus = false) {
     this.items = [];
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -511,8 +554,22 @@ export default class GameEngine {
         y: 100 + Math.random() * (h - 200),
         type: itemType,
         collected: false,
+        farmBonus, // item dari hasil panen kebun — diberi efek visual (Phase 8.6)
       });
     }
+  }
+
+  spawnSingleItem(itemType = 'cucumber', farmBonus = false) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    this.items.push({
+      id: `item-${Date.now()}-${Math.random()}`,
+      x: 100 + Math.random() * (w - 200),
+      y: 100 + Math.random() * (h - 200),
+      type: itemType,
+      collected: false,
+      farmBonus,
+    });
   }
 
   // Deteksi tabrakan pemain dengan item. Mengembalikan daftar item id yang diambil.

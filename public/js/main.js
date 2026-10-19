@@ -191,14 +191,16 @@ const heartRenderTimer = setInterval(() => {
 // ---------- Kebun / Peternakan sederhana (Phase 8.6) ----------
 const FARM_STORAGE_KEY = 'wayangkancil_farm';
 const FARM_PLOT_COUNT = 4;
-let farmData = { plots: [], lastHarvestBonus: 0 };
+// Waktu pertumbuhan per stage (ms): benih->menumbuh, menumbuh->siap panen
+const FARM_GROWTH_TIME = { 1: 30000, 2: 60000 }; // 30s, 60s
+let farmData = { plots: [], lastHarvestBonus: 0, lastUpdated: Date.now() };
 
 function defaultFarm() {
   const plots = [];
   for (let i = 0; i < FARM_PLOT_COUNT; i++) {
-    plots.push({ id: i, crop: null, stage: 0, plantedAt: null }); // stage: 0=kosong, 1=benih, 2=menumbuh, 3=siap panen
+    plots.push({ id: i, crop: null, stage: 0, plantedAt: null, growthTime: 0 }); // stage: 0=kosong, 1=benih, 2=menumbuh, 3=siap panen
   }
-  return { plots, lastHarvestBonus: 0 };
+  return { plots, lastHarvestBonus: 0, lastUpdated: Date.now() };
 }
 
 function loadFarm() {
@@ -208,19 +210,42 @@ function loadFarm() {
     else farmData = defaultFarm();
     // Pastikan jumlah plot konsisten
     while (farmData.plots.length < FARM_PLOT_COUNT) {
-      farmData.plots.push({ id: farmData.plots.length, crop: null, stage: 0, plantedAt: null });
+      farmData.plots.push({ id: farmData.plots.length, crop: null, stage: 0, plantedAt: null, growthTime: 0 });
     }
+    // Hitung pertumbuhan berdasarkan waktu yang telah berlalu sejak terakhir disimpan
+    updateFarmGrowth();
   } catch (e) {
     farmData = defaultFarm();
   }
+  farmData.lastUpdated = Date.now();
 }
 
 function saveFarm() {
   try {
+    farmData.lastUpdated = Date.now();
     localStorage.setItem(FARM_STORAGE_KEY, JSON.stringify(farmData));
   } catch (e) {
     // silent
   }
+}
+
+// Hitung pertumbuhan plot berdasarkan waktu yang berlalu (real-time)
+function updateFarmGrowth() {
+  const now = Date.now();
+  let changed = false;
+  for (const plot of farmData.plots) {
+    if (plot.stage === 0 || plot.stage === 3 || !plot.plantedAt) continue;
+    const elapsed = now - plot.plantedAt;
+    const needed = FARM_GROWTH_TIME[plot.stage] || 0;
+    if (elapsed >= needed) {
+      plot.stage += 1;
+      changed = true;
+      if (plot.stage === 3) {
+        plot.plantedAt = now; // tandai siap panen sejak sekarang
+      }
+    }
+  }
+  if (changed) saveFarm();
 }
 
 function plantSeed(plotId) {
@@ -229,6 +254,7 @@ function plantSeed(plotId) {
   plot.crop = 'timun';
   plot.stage = 1; // benih
   plot.plantedAt = Date.now();
+  plot.growthTime = FARM_GROWTH_TIME[1];
   saveFarm();
   return true;
 }
@@ -249,8 +275,12 @@ function harvestPlot(plotId) {
   plot.crop = null;
   plot.stage = 0;
   plot.plantedAt = null;
+  plot.growthTime = 0;
   farmData.lastHarvestBonus = amount;
   saveFarm();
+  // Menambah hubungan dengan Pak Tani (pemilik kebun) setelah panen (Phase 8.5 + 8.6)
+  modifyHeart('pak-tani', 10);
+  showStatus('Panen berhasil! Hubungan dengan Pak Tani +10', false);
   return amount;
 }
 
@@ -263,7 +293,18 @@ function getFarmStageLabel(stage) {
   return labels[stage] || 'Kosong';
 }
 
+function getFarmProgress(plot) {
+  if (plot.stage === 0) return 0;
+  if (plot.stage === 3) return 100;
+  const needed = FARM_GROWTH_TIME[plot.stage] || 1;
+  const elapsed = Date.now() - plot.plantedAt;
+  return Math.min(100, Math.round((elapsed / needed) * 100));
+}
+
 loadFarm();
+
+// Update pertumbuhan kebun secara berkala (real-time)
+setInterval(updateFarmGrowth, 5000);
 
 // UI: tombol buka kebun di lobby
 function renderFarmBtn() {
@@ -335,6 +376,7 @@ function renderFarmPlots() {
     const card = document.createElement('div');
     card.className = `p-3 rounded border ${plot.stage === 0 ? 'border-gray-700 bg-gray-800/50' : plot.stage === 3 ? 'border-green-500 bg-green-500/10' : 'border-yellow-500/30 bg-yellow-500/5'}`;
     const stageLabel = getFarmStageLabel(plot.stage);
+    const progress = getFarmProgress(plot);
     let actionHtml = '';
     if (plot.stage === 0) {
       actionHtml = `<button class="w-full py-1 bg-yellow-600 hover:bg-yellow-500 text-black text-[10px] font-bold rounded" onclick="plantSeed(${plot.id})">Tanam</button>`;
@@ -343,7 +385,12 @@ function renderFarmPlots() {
       actionHtml = `<button class="w-full py-1 bg-green-600 hover:bg-green-500 text-black text-[10px] font-bold rounded" onclick="harvestPlot(${plot.id})">Panen</button>`;
       readyCount++;
     } else {
-      actionHtml = `<span class="text-[10px] text-gray-400">${stageLabel}</span>`;
+      actionHtml = `
+        <div class="w-full bg-gray-700 h-1 rounded mb-1">
+          <div class="bg-green-500 h-1 rounded" style="width:${progress}%"></div>
+        </div>
+        <span class="text-[10px] text-gray-400">${progress}%</span>
+      `;
     }
 
     card.innerHTML = `
@@ -855,7 +902,10 @@ socket.on('gameStateUpdate', ({ players, scores, season, seasonInfo, timer }) =>
     currentSeason = { id: season, ...seasonInfo };
     hudSeason.classList.remove('hidden');
     hudSeasonLabel.textContent = `${currentSeason.icon} ${currentSeason.label}`;
-    if (engine) engine.setItemType(currentSeason.itemTypes[0]);
+    if (engine) {
+      engine.setSeason(currentSeason.id, currentSeason);
+      engine.setItemType(currentSeason.itemTypes[0]);
+    }
   }
 
   // Render leaderboard skor multiplayer (Phase 8.2)
@@ -886,10 +936,11 @@ socket.on('gameStateUpdate', ({ players, scores, season, seasonInfo, timer }) =>
     }
   }
 
-  // Skor sederhana berdasarkan jarak tempuh pemain lokal
+  // Skor sederhana berdasarkan jarak tempuh pemain lokal (dikalikan multiplier musim)
   const me = players[myPlayerId];
   if (me) {
-    score = Math.floor(me.x / 10);
+    const seasonMult = currentSeason ? currentSeason.itemValueMultiplier : 1;
+    score = Math.floor((me.x / 10) * seasonMult);
     hudScore.textContent = score;
   }
 });
@@ -933,7 +984,8 @@ socket.on('itemCollected', ({ playerId, playerName, itemId, score }) => {
   if (playerId === myPlayerId) {
     score = score || 0;
     hudScore.textContent = score;
-    showStatus(`${playerName} mengambil timun (+10)`, false);
+    const seasonLabel = currentSeason ? ` (${currentSeason.icon} ${currentSeason.label})` : '';
+    showStatus(`${playerName} mengambil item (+${points})${seasonLabel}`, false);
     sound.playSfx('collect');
 
     // Timun dibudidayakan Pak Tani -> hubungan lebih baik (Phase 8.5)
@@ -1041,8 +1093,8 @@ function initGameEngine(roomId) {
   // Bonus item awal dari hasil panen kebun (Phase 8.6)
   const farmBonus = getFarmHarvestBonus();
   if (farmBonus > 0) {
-    engine.spawnItems(farmBonus, initialItemType);
-    showStatus(`Bonus dari kebun: +${farmBonus} item awal`, false);
+    engine.spawnItems(farmBonus, initialItemType, true);
+    showStatus(`Bonus dari kebun: +${farmBonus} item awal (bercahaya)`, false);
   }
 
   // Input lokal -> kirim playerMoved ke server
