@@ -176,14 +176,6 @@ export default class WorldEngine {
     // NPC dengan area patrol (bergerak bebas dalam area)
     this.npcs = [
       {
-        id: 'kancil', name: 'Si Kancil',
-        x: 30 * TILE_SIZE + TILE_SIZE / 2, y: 28 * TILE_SIZE + TILE_SIZE / 2,
-        color: '#fbbf24', image: 'kancil', dialogue: 'Halo! Aku Si Kancil.',
-        patrol: { x1: 28, y1: 26, x2: 32, y2: 30 }, // area patrol
-        vx: 1, vy: 0, // kecepatan patrol
-        episodeId: null,
-      },
-      {
         id: 'pak-tani', name: 'Pak Tani',
         x: 8 * TILE_SIZE + TILE_SIZE / 2, y: 8 * TILE_SIZE + TILE_SIZE / 2,
         color: '#22c55e', image: 'pak-tani', dialogue: 'Selamat datang di kebunku! Tanam timun di sini.',
@@ -225,9 +217,9 @@ export default class WorldEngine {
 
     // Challenge zones
     this.challenges = [
-      { id: 'ch-buaya', tileX: 25, tileY: 16, episodeId: 'ep-1', name: 'Tantangan Buaya', completed: false, radius: 2 },
-      { id: 'ch-macan', tileX: 40, tileY: 16, episodeId: 'ep-2', name: 'Tantangan Macan', completed: false, radius: 2 },
-      { id: 'ch-siput', tileX: 12, tileY: 21, episodeId: 'ep-3', name: 'Tantangan Siput', completed: false, radius: 2 },
+      { id: 'ch-buaya', tileX: 25, tileY: 16, episodeId: 'ep-1', name: 'Tantangan Buaya', completed: false, radius: 3 },
+      { id: 'ch-macan', tileX: 40, tileY: 16, episodeId: 'ep-2', name: 'Tantangan Macan', completed: false, radius: 3 },
+      { id: 'ch-siput', tileX: 12, tileY: 21, episodeId: 'ep-3', name: 'Tantangan Siput', completed: false, radius: 3 },
     ];
   }
 
