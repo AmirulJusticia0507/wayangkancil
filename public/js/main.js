@@ -183,6 +183,191 @@ const heartRenderTimer = setInterval(() => {
   }
 }, 300);
 
+// ---------- Kebun / Peternakan sederhana (Phase 8.6) ----------
+const FARM_STORAGE_KEY = 'wayangkancil_farm';
+const FARM_PLOT_COUNT = 4;
+let farmData = { plots: [], lastHarvestBonus: 0 };
+
+function defaultFarm() {
+  const plots = [];
+  for (let i = 0; i < FARM_PLOT_COUNT; i++) {
+    plots.push({ id: i, crop: null, stage: 0, plantedAt: null }); // stage: 0=kosong, 1=benih, 2=menumbuh, 3=siap panen
+  }
+  return { plots, lastHarvestBonus: 0 };
+}
+
+function loadFarm() {
+  try {
+    const raw = localStorage.getItem(FARM_STORAGE_KEY);
+    if (raw) farmData = JSON.parse(raw);
+    else farmData = defaultFarm();
+    // Pastikan jumlah plot konsisten
+    while (farmData.plots.length < FARM_PLOT_COUNT) {
+      farmData.plots.push({ id: farmData.plots.length, crop: null, stage: 0, plantedAt: null });
+    }
+  } catch (e) {
+    farmData = defaultFarm();
+  }
+}
+
+function saveFarm() {
+  try {
+    localStorage.setItem(FARM_STORAGE_KEY, JSON.stringify(farmData));
+  } catch (e) {
+    // silent
+  }
+}
+
+function plantSeed(plotId) {
+  const plot = farmData.plots.find((p) => p.id === plotId);
+  if (!plot || plot.stage !== 0) return false;
+  plot.crop = 'timun';
+  plot.stage = 1; // benih
+  plot.plantedAt = Date.now();
+  saveFarm();
+  return true;
+}
+
+function tendPlot(plotId) {
+  const plot = farmData.plots.find((p) => p.id === plotId);
+  if (!plot || plot.stage === 0 || plot.stage === 3) return false;
+  plot.stage += 1;
+  if (plot.stage === 3) plot.plantedAt = Date.now(); // tandai siap panen
+  saveFarm();
+  return true;
+}
+
+function harvestPlot(plotId) {
+  const plot = farmData.plots.find((p) => p.id === plotId);
+  if (!plot || plot.stage !== 3) return 0;
+  const amount = 1;
+  plot.crop = null;
+  plot.stage = 0;
+  plot.plantedAt = null;
+  farmData.lastHarvestBonus = amount;
+  saveFarm();
+  return amount;
+}
+
+function getReadyPlots() {
+  return farmData.plots.filter((p) => p.stage === 3);
+}
+
+function getFarmStageLabel(stage) {
+  const labels = ['Kosong', 'Benih', 'Menumbuh', 'Siap Panen'];
+  return labels[stage] || 'Kosong';
+}
+
+loadFarm();
+
+// UI: tombol buka kebun di lobby
+function renderFarmBtn() {
+  const panel = document.querySelector('.lobby-panel');
+  if (!panel || document.getElementById('farmBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'farmBtn';
+  btn.type = 'button';
+  btn.className = 'w-full py-3 mt-4 bg-green-600 hover:bg-green-500 text-black font-bold rounded shadow-[0_0_15px_rgba(34,197,94,0.3)] transition text-xs';
+  btn.textContent = '🌿 Kebun Timun (Antar Lakon)';
+  btn.onclick = () => toggleFarmPanel();
+  panel.appendChild(btn);
+}
+
+const farmRenderTimer = setInterval(() => {
+  if (document.querySelector('.lobby-panel')) {
+    clearInterval(farmRenderTimer);
+    renderFarmBtn();
+  }
+}, 300);
+
+let farmPanelEl = null;
+
+function toggleFarmPanel() {
+  if (farmPanelEl) {
+    farmPanelEl.remove();
+    farmPanelEl = null;
+    return;
+  }
+
+  farmPanelEl = document.createElement('div');
+  farmPanelEl.id = 'farmPanel';
+  farmPanelEl.className = 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm';
+  farmPanelEl.innerHTML = `
+    <div class="bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.2)] w-full max-w-md text-center">
+      <h2 class="text-2xl font-black text-green-300 mb-4">🌿 Kebun Timun Kancil</h2>
+      <p class="text-xs text-gray-400 mb-6">Tanam timun di antar lakon. Panen untuk bonus item di game berikutnya.</p>
+      
+      <div class="grid grid-cols-2 gap-3 mb-6" id="farmPlots">
+        <!-- diisi oleh JS -->
+      </div>
+
+      <div class="mb-4" id="farmMsg" class="text-xs text-green-400 min-h-[1.2em]"></div>
+
+      <div class="flex justify-center gap-3">
+        <button id="farmCloseBtn" class="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-bold text-xs">Tutup</button>
+      </div>
+    </div>
+  `;
+
+  const closeBtn = farmPanelEl.querySelector('#farmCloseBtn');
+  closeBtn.onclick = () => toggleFarmPanel();
+  // Tutup jika klik di luar panel
+  farmPanelEl.onclick = (e) => { if (e.target === farmPanelEl) toggleFarmPanel(); };
+
+  document.body.appendChild(farmPanelEl);
+  renderFarmPlots();
+}
+
+function renderFarmPlots() {
+  const container = document.getElementById('farmPlots');
+  const msg = document.getElementById('farmMsg');
+  if (!container || !farmPanelEl) return;
+
+  container.innerHTML = '';
+  let readyCount = 0;
+
+  for (const plot of farmData.plots) {
+    const card = document.createElement('div');
+    card.className = `p-3 rounded border ${plot.stage === 0 ? 'border-gray-700 bg-gray-800/50' : plot.stage === 3 ? 'border-green-500 bg-green-500/10' : 'border-yellow-500/30 bg-yellow-500/5'}`;
+    const stageLabel = getFarmStageLabel(plot.stage);
+    let actionHtml = '';
+    if (plot.stage === 0) {
+      actionHtml = `<button class="w-full py-1 bg-yellow-600 hover:bg-yellow-500 text-black text-[10px] font-bold rounded" onclick="plantSeed(${plot.id})">Tanam</button>`;
+      readyCount++;
+    } else if (plot.stage === 3) {
+      actionHtml = `<button class="w-full py-1 bg-green-600 hover:bg-green-500 text-black text-[10px] font-bold rounded" onclick="harvestPlot(${plot.id})">Panen</button>`;
+      readyCount++;
+    } else {
+      actionHtml = `<span class="text-[10px] text-gray-400">${stageLabel}</span>`;
+    }
+
+    card.innerHTML = `
+      <div class="text-[10px] text-gray-400 mb-1">${stageLabel}</div>
+      <div class="h-8 rounded bg-gray-700 mb-2 flex items-center justify-center text-[10px] text-gray-300">${plot.stage === 0 ? '—' : plot.stage === 1 ? '🌱' : plot.stage === 2 ? '🌿' : '🥒'}</div>
+      ${actionHtml}
+    `;
+    container.appendChild(card);
+  }
+
+  if (msg) {
+    msg.textContent = readyCount > 0 ? `${readyCount} plot siap diolah.` : 'Kosong — tanam benih timun untuk memulai.';
+  }
+}
+
+// Expose ke window agar onclick HTML bisa memanggil
+window.plantSeed = plantSeed;
+window.harvestPlot = harvestPlot;
+window.toggleFarmPanel = toggleFarmPanel;
+window.renderFarmPlots = renderFarmPlots;
+
+// Tambah bonus item awal ke game berdasarkan hasil panen terakhir
+function getFarmHarvestBonus() {
+  const bonus = farmData.lastHarvestBonus || 0;
+  farmData.lastHarvestBonus = 0;
+  saveFarm();
+  return bonus;
+}
+
 // ---------- Episode selection (Phase 6) ----------
 function populateEpisodes() {
   const episodes = getAllEpisodes();
@@ -836,6 +1021,13 @@ function initGameEngine(roomId) {
 
   // Item mock (timun) akan di-generate sepenuhnya di Phase 4
   engine.spawnMockItems(8);
+
+  // Bonus item awal dari hasil panen kebun (Phase 8.6)
+  const farmBonus = getFarmHarvestBonus();
+  if (farmBonus > 0) {
+    engine.spawnItems(farmBonus);
+    showStatus(`Bonus dari kebun: +${farmBonus} item awal`, false);
+  }
 
   // Input lokal -> kirim playerMoved ke server
   const keys = {};
