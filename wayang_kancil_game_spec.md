@@ -90,3 +90,12 @@ wayang-kancil-game/
 - [ ] **Phase 5: Audio, Polish & Moral Story Screen**
   - Integrate Gamelan ambient sound effects.
   - Add end-game screen displaying traditional Wayang Kancil moral lessons (*piwulang*).
+
+- [ ] **Phase 6: Episode & Story Mode**
+  - Define episode data structure (story, objective, ability, moral).
+  - Add episode selection UI in lobby.
+  - Implement Episode 1: Kancil & Buaya (river crossing).
+  - Implement Episode 2: Kancil & Harimau (gong & sabuk trick).
+  - Implement Episode 3: Kancil & Siput (race with echo).
+  - Add story intro and outro screens with *piwulang*.
+  - Episode-specific win conditions and abilities.

@@ -23,6 +23,15 @@ Daftar tugas dari `wayang_kancil_game_spec.md`. Setiap item selesai dikerjakan, 
 - [x] [DONE] Integrate Gamelan ambient sound effects.
 - [x] [DONE] Add end-game screen displaying traditional Wayang Kancil moral lessons (*piwulang*).
 
+## Phase 6: Episode & Story Mode
+- [ ] Define episode data structure (story, objective, ability, moral).
+- [ ] Add episode selection UI in lobby.
+- [ ] Implement Episode 1: Kancil & Buaya (river crossing).
+- [ ] Implement Episode 2: Kancil & Harimau (gong & sabuk trick).
+- [ ] Implement Episode 3: Kancil & Siput (race with echo).
+- [ ] Add story intro and outro screens with *piwulang*.
+- [ ] Episode-specific win conditions and abilities.
+
 ## Aturan Wajib
 Setiap checklist di atas yang sudah dicentang (selesai dikerjakan):
 
