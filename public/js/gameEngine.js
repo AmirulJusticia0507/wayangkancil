@@ -53,6 +53,12 @@ export default class GameEngine {
     const sources = {
       kancil: '/assets/puppets/kancil.png',
       buaya: '/assets/puppets/buaya.png',
+      'pak-tani': '/assets/puppets/pak-tani.png',
+      macan: '/assets/puppets/macan.png',
+      siput: '/assets/puppets/siput.png',
+      serigala: '/assets/puppets/serigala.png',
+      elang: '/assets/puppets/elang.png',
+      beruang: '/assets/puppets/beruang.png',
     };
     for (const [name, src] of Object.entries(sources)) {
       const img = new Image();

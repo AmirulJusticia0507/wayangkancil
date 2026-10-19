@@ -39,6 +39,12 @@ export class NarrativeEngine {
     const normalized = label.toLowerCase();
     if (normalized.includes('kancil')) return '/assets/puppets/kancil.png';
     if (normalized.includes('buaya')) return '/assets/puppets/buaya.png';
+    if (normalized.includes('pak tani') || normalized.includes('pak-tani')) return '/assets/puppets/pak-tani.png';
+    if (normalized.includes('macan') || normalized.includes('harimau')) return '/assets/puppets/macan.png';
+    if (normalized.includes('siput')) return '/assets/puppets/siput.png';
+    if (normalized.includes('serigala')) return '/assets/puppets/serigala.png';
+    if (normalized.includes('elang')) return '/assets/puppets/elang.png';
+    if (normalized.includes('beruang')) return '/assets/puppets/beruang.png';
     return null;
   }
 

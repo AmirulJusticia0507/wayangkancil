@@ -89,6 +89,12 @@ export default class WorldEngine {
     const sources = {
       kancil: '/assets/puppets/kancil.png',
       buaya: '/assets/puppets/buaya.png',
+      'pak-tani': '/assets/puppets/pak-tani.png',
+      macan: '/assets/puppets/macan.png',
+      siput: '/assets/puppets/siput.png',
+      serigala: '/assets/puppets/serigala.png',
+      elang: '/assets/puppets/elang.png',
+      beruang: '/assets/puppets/beruang.png',
     };
     for (const [name, src] of Object.entries(sources)) {
       const img = new Image();
@@ -160,8 +166,8 @@ export default class WorldEngine {
 
     this.npcs = [
       { id: 'kancil', name: 'Si Kancil', x: 25 * TILE_SIZE + TILE_SIZE / 2, y: 12 * TILE_SIZE + TILE_SIZE / 2, color: '#fbbf24', image: 'kancil', dialogue: 'Halo! Aku Si Kancil. Mau bermain?', episodeId: null },
-      { id: 'pak-tani', name: 'Pak Tani', x: 8 * TILE_SIZE + TILE_SIZE / 2, y: 18 * TILE_SIZE + TILE_SIZE / 2, color: '#22c55e', image: null, dialogue: 'Selamat datang di kebunku! Tanam timun di sini.', episodeId: null },
-      { id: 'macan', name: 'Macan', x: 40 * TILE_SIZE + TILE_SIZE / 2, y: 18 * TILE_SIZE + TILE_SIZE / 2, color: '#ef4444', image: null, dialogue: 'Grrr... Jangan ganggu aku!', episodeId: 'ep-2' },
+      { id: 'pak-tani', name: 'Pak Tani', x: 8 * TILE_SIZE + TILE_SIZE / 2, y: 18 * TILE_SIZE + TILE_SIZE / 2, color: '#22c55e', image: 'pak-tani', dialogue: 'Selamat datang di kebunku! Tanam timun di sini.', episodeId: null },
+      { id: 'macan', name: 'Macan', x: 40 * TILE_SIZE + TILE_SIZE / 2, y: 18 * TILE_SIZE + TILE_SIZE / 2, color: '#ef4444', image: 'macan', dialogue: 'Grrr... Jangan ganggu aku!', episodeId: 'ep-2' },
       { id: 'buaya', name: 'Buaya', x: 22 * TILE_SIZE + TILE_SIZE / 2, y: 16 * TILE_SIZE + TILE_SIZE / 2, color: '#10b981', image: 'buaya', dialogue: 'Hati-hati di sungai! Aku bukan musuh.', episodeId: 'ep-1' },
     ];
 
