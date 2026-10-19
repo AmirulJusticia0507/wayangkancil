@@ -71,6 +71,8 @@ let boostUntil = 0;
 let lastAbility = 0;
 let playerChoices = []; // { scene, choice, effect }
 let isSoloMode = false; // Cerita sendiri tanpa room/multiplayer
+let soloStoryQueue = []; // antrean episode yang akan diputar berurutan
+let soloStoryIndex = 0; // indeks episode saat ini dalam antrean
 
 // ---------- Story Progress (Phase 7.3) ----------
 const STORAGE_KEY = 'wayangkancil_progress';
@@ -221,10 +223,6 @@ if (themeToggleBtn) {
 
 // ---------- Cerita Sendiri / Solo Story Mode (tambahan) ----------
 function startSoloStory(episodeId) {
-  if (!episodeId) {
-    showStatus('Pilih episode cerita terlebih dahulu.');
-    return;
-  }
   const playerName = playerNameInput.value.trim();
   if (!playerName) {
     showStatus('Nama pemain wajib diisi.');
@@ -232,8 +230,13 @@ function startSoloStory(episodeId) {
   }
 
   myCharacter = characterSelect.value;
-  myEpisode = episodeId;
   isSoloMode = true;
+
+  // Bangun antrean episode dari episode yang dipilih (atau ep-1) sampai episode terakhir
+  const allEpisodes = getAllEpisodes();
+  const startIdx = episodeId ? allEpisodes.findIndex((e) => e.id === episodeId) : 0;
+  soloStoryQueue = allEpisodes.slice(Math.max(0, startIdx === -1 ? 0 : startIdx)).map((e) => e.id);
+  soloStoryIndex = 0;
 
   // Langsung ke narrative scene tanpa room / socket
   lobby.classList.add('hidden');
@@ -241,9 +244,34 @@ function startSoloStory(episodeId) {
   gameContainer.classList.add('hidden');
   narrativeScene.classList.remove('hidden');
 
-  startNarrative(episodeId);
-  const ep = getEpisode(episodeId);
-  if (ep) showStatus(`Memulai cerita: ${ep.title}`, false);
+  playNextSoloEpisode();
+}
+
+function playNextSoloEpisode() {
+  if (soloStoryIndex >= soloStoryQueue.length) {
+    // Semua episode selesai — kembali ke lobby
+    isSoloMode = false;
+    soloStoryQueue = [];
+    soloStoryIndex = 0;
+    lobby.classList.remove('hidden');
+    narrativeScene.classList.add('hidden');
+    piwulangScreen.classList.add('hidden');
+    myRoom = null;
+    myEpisode = null;
+    playerChoices = [];
+    engine = null;
+    narrative = null;
+    showStatus('Semua episode cerita selesai. Kembali ke lobby.', false);
+    return;
+  }
+
+  const epId = soloStoryQueue[soloStoryIndex];
+  myEpisode = epId;
+  soloStoryIndex++;
+  playerChoices = [];
+  startNarrative(epId);
+  const ep = getEpisode(epId);
+  if (ep) showStatus(`Memulai cerita: ${ep.title} (${soloStoryIndex}/${soloStoryQueue.length})`, false);
 }
 
 if (soloStoryBtn) {
@@ -981,15 +1009,8 @@ function showPiwulangScreen(ep, choices = []) {
 piwulangStartBtn.addEventListener('click', () => {
   piwulangScreen.classList.add('hidden');
   if (isSoloMode) {
-    // Kembali ke lobby untuk mode cerita sendiri
-    isSoloMode = false;
-    lobby.classList.remove('hidden');
-    narrativeScene.classList.add('hidden');
-    myRoom = null;
-    myEpisode = null;
-    playerChoices = [];
-    engine = null;
-    narrative = null;
+    // Lanjut ke episode berikutnya dalam antrean solo story
+    playNextSoloEpisode();
   } else {
     gameContainer.classList.remove('hidden');
     if (!engine) initGameEngine(myRoom);
