@@ -663,17 +663,32 @@ body.theme-light #farmMsg {
 
 /* 2026 Lobby — an explorable Kelir map */
 :root { --ink:#16110b; --night:#0b0b09; --paper:#e9d8ad; --paper-deep:#c9a96c; --ember:#e46f2b; --gold:#f0bd62; --line:rgba(233,216,173,.2); }
-#lobby { isolation:isolate; justify-content:flex-start!important; align-items:stretch!important; overflow-x:hidden; overflow-y:auto; background:var(--night); scrollbar-width:thin; scrollbar-color:var(--paper-deep) #17130e; }
+
+/* --- Scroll halaman (fix: lobby lama memakai `position:fixed` sehingga isinya
+   tidak pernah menambah tinggi dokumen => halaman tidak bisa di-scroll) --- */
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-deep) #17130e;
+}
+body { overflow: visible; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #17130e; }
+::-webkit-scrollbar-thumb { background: var(--paper-deep); }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+#lobby { position:relative!important; inset:auto!important; min-height:100vh; min-height:100dvh; isolation:isolate; justify-content:flex-start!important; align-items:stretch!important; overflow:visible; background:var(--night); }
 #lobby .lobby-bg { background:linear-gradient(90deg,rgba(8,7,5,.98) 0%,rgba(12,10,7,.9) 42%,rgba(27,20,11,.6) 100%),radial-gradient(circle at 76% 38%,rgba(240,189,98,.24),transparent 36%),#0b0b09; }
 #lobby .lobby-bg::before { opacity:.08; filter:sepia(1) contrast(1.2); }
 #lobby .lobby-bg::after { content:''; position:absolute; inset:0; background-image:linear-gradient(rgba(240,189,98,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(240,189,98,.035) 1px,transparent 1px); background-size:64px 64px; mask-image:linear-gradient(90deg,transparent,#000 45%); }
 #lobby .lobby-blencong { top:-24vw; right:-12vw; width:86vw; height:86vw; background:radial-gradient(circle,rgba(240,189,98,.22),rgba(151,71,25,.08) 32%,transparent 66%); animation-duration:8s; }
-#lobby > .relative { max-width:1440px!important; min-height:100%; height:auto!important; padding:7vh clamp(24px,6vw,96px) 5vh; align-items:flex-start!important; justify-content:flex-start!important; }
+#lobby > .relative { max-width:1440px!important; min-height:100vh; min-height:100dvh; height:auto!important; padding:7vh clamp(24px,6vw,96px) 5vh; align-items:flex-start!important; justify-content:flex-start!important; }
 #lobby > .relative::before { content:'WAYANG KANCIL  /  DUNIA CERITA INTERAKTIF'; display:block; width:100%; padding-bottom:18px; margin-bottom:clamp(32px,6vh,70px); border-bottom:1px solid var(--line); color:rgba(233,216,173,.62); font:600 10px/1 monospace; letter-spacing:.22em; }
 #lobby .lobby-title { max-width:800px; margin:0!important; font-family:Georgia,'Times New Roman',serif; font-size:clamp(4rem,9.5vw,8.7rem)!important; font-weight:400!important; line-height:.78; letter-spacing:-.075em; text-align:left!important; background:linear-gradient(105deg,#f6e8c7 5%,#e0bd78 58%,#a8612f 100%); -webkit-background-clip:text; filter:none; animation:none; }
 #lobby .lobby-title::after { content:'Permainan strategi • Cerita rakyat • Multiplayer'; display:block; max-width:480px; margin:34px 0 0 6px; color:rgba(233,216,173,.54); -webkit-text-fill-color:rgba(233,216,173,.54); font:500 clamp(.65rem,1vw,.8rem)/1.5 ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase; }
 #lobby .lobby-title + p { order:3; align-self:flex-start; margin:22px 0 42px 7px!important; color:var(--gold)!important; opacity:.72; animation:none; font-size:11px!important; }
-#lobby .lobby-panel { position:relative; width:min(100%,980px)!important; max-width:none!important; align-self:flex-end; margin-top:-30px; padding:clamp(28px,4vw,52px)!important; border-radius:2px!important; border:1px solid rgba(233,216,173,.18); border-top:3px solid var(--ember); background:linear-gradient(115deg,rgba(25,21,16,.94),rgba(15,13,10,.98)); box-shadow:0 36px 100px rgba(0,0,0,.6); backdrop-filter:blur(20px); }
+#lobby .lobby-panel { position:relative; width:min(100%,980px)!important; max-width:none!important; align-self:flex-end; margin-top:clamp(18px,3.5vh,48px); padding:clamp(28px,4vw,52px)!important; border-radius:2px!important; border:1px solid rgba(233,216,173,.18); border-top:3px solid var(--ember); background:linear-gradient(115deg,rgba(25,21,16,.94),rgba(15,13,10,.98)); box-shadow:0 36px 100px rgba(0,0,0,.6); backdrop-filter:blur(20px); }
 #lobby .lobby-panel::before { content:'PETA KELIR  ·  PILIH LAKONMU'; position:absolute; top:-31px; right:0; padding:9px 14px; background:var(--ember); color:#160d08; font:900 9px/1 monospace; letter-spacing:.16em; }
 #lobby .lobby-panel > .text-center:first-child { text-align:left!important; margin-bottom:28px!important; padding-bottom:22px; border-bottom:1px solid var(--line); }
 #lobby .lobby-panel > .text-center:first-child h2 { font-family:Georgia,serif; font-size:clamp(1.5rem,3vw,2.4rem); font-weight:400; color:var(--paper); }
@@ -708,7 +723,7 @@ body.theme-light #farmMsg {
   #lobby .lobby-title { font-size:clamp(3.6rem,17vw,6.8rem)!important; line-height:.82; }
   #lobby .lobby-title::after { margin-top:24px; }
   #lobby .lobby-title + p { margin-bottom:120px!important; }
-  #lobby .lobby-panel { box-sizing:border-box; width:calc(100vw - 40px)!important; margin-top:0; padding:26px 20px!important; }
+  #lobby .lobby-panel { box-sizing:border-box; width:100%!important; margin-top:46px; padding:26px 20px!important; }
   #lobby .lobby-panel::before { content:'PILIH LAKON'; }
   #lobby .space-y-4 { grid-template-columns:1fr; gap:10px; }
   #lobby .space-y-4 label[for="characterSelect"],#lobby #characterSelect,#lobby .space-y-4 label[for="episodeSelect"],#lobby #episodeSelect { grid-column:1; grid-row:auto; }

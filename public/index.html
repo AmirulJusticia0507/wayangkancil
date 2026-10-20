@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Wayang Kancil Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/style.css?v=12" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -20,14 +20,14 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 </head>
-<body class="bg-gray-900 text-white overflow-hidden">
+<body class="bg-gray-900 text-white">
 
-  <!-- Lobby / Waiting Room -->
-  <div id="lobby" class="fixed inset-0 z-10 flex flex-col items-center justify-center">
+  <!-- Lobby / Waiting Room — memakai flow normal (bukan fixed) agar halaman bisa di-scroll -->
+  <div id="lobby" class="relative z-10 flex flex-col items-center justify-center">
     <div class="lobby-bg"></div>
     <div class="lobby-blencong"></div>
 
-    <div class="relative z-10 w-full max-w-3xl px-4 flex flex-col items-center justify-center h-full">
+    <div class="relative z-10 w-full max-w-3xl px-4 flex flex-col items-center justify-center">
       <h1 class="lobby-title text-5xl md:text-6xl font-black mb-1 tracking-tight text-center">
         WAYANG KANCIL
       </h1>

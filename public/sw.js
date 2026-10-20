@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v11-scrollable-lobby';
+const CACHE_NAME = 'wayang-kancil-v12-page-scroll';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -54,16 +54,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aset statis: cache-first, fallback network
+  // Aset statis: stale-while-revalidate — sajikan cache, perbarui di background
+  // supaya CSS/JS versi baru selalu masuk pada load berikutnya.
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (!response || (response.status !== 200 && response.type !== 'opaque')) return response;
-        const copy = response.clone();
-        event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
-        return response;
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(request);
+      const network = fetch(request)
+        .then((response) => {
+          if (response && (response.status === 200 || response.type === 'opaque')) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        })
+        .catch(() => null);
+
+      if (cached) {
+        event.waitUntil(network);
+        return cached;
+      }
+
+      const fresh = await network;
+      return fresh || new Response('Offline', { status: 504, statusText: 'Offline' });
     })
   );
 });

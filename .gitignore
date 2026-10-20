@@ -5,3 +5,6 @@ package-lock.json
 Thumbs.db
 
 .vercel
+
+# Temporary debug artifacts (screenshots, test scripts, chrome profiles)
+.tmp*/
