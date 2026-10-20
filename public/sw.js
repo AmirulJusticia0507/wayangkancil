@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v10-realistic-environment';
+const CACHE_NAME = 'wayang-kancil-v11-scrollable-lobby';
 const APP_SHELL = [
   '/',
   '/index.html',

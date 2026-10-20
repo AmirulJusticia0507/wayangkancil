@@ -663,7 +663,7 @@ body.theme-light #farmMsg {
 
 /* 2026 Lobby — an explorable Kelir map */
 :root { --ink:#16110b; --night:#0b0b09; --paper:#e9d8ad; --paper-deep:#c9a96c; --ember:#e46f2b; --gold:#f0bd62; --line:rgba(233,216,173,.2); }
-#lobby { isolation:isolate; justify-content:flex-start!important; align-items:stretch!important; background:var(--night); scrollbar-width:thin; scrollbar-color:var(--paper-deep) #17130e; }
+#lobby { isolation:isolate; justify-content:flex-start!important; align-items:stretch!important; overflow-x:hidden; overflow-y:auto; background:var(--night); scrollbar-width:thin; scrollbar-color:var(--paper-deep) #17130e; }
 #lobby .lobby-bg { background:linear-gradient(90deg,rgba(8,7,5,.98) 0%,rgba(12,10,7,.9) 42%,rgba(27,20,11,.6) 100%),radial-gradient(circle at 76% 38%,rgba(240,189,98,.24),transparent 36%),#0b0b09; }
 #lobby .lobby-bg::before { opacity:.08; filter:sepia(1) contrast(1.2); }
 #lobby .lobby-bg::after { content:''; position:absolute; inset:0; background-image:linear-gradient(rgba(240,189,98,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(240,189,98,.035) 1px,transparent 1px); background-size:64px 64px; mask-image:linear-gradient(90deg,transparent,#000 45%); }
