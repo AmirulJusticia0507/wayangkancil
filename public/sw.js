@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v8-ai-dialogue';
+const CACHE_NAME = 'wayang-kancil-v9-realistic-puppets';
 const APP_SHELL = [
   '/',
   '/index.html',
