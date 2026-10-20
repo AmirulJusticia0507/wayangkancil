@@ -61,6 +61,8 @@ export default class WorldEngine {
 
     this.puppetImages = {};
     this.loadPuppetImages();
+    this.terrainImages = {};
+    this.loadTerrainImages();
 
     this.menuButton = { x: 0, y: 0, w: 120, h: 36 };
     this.onMenuClick = null;
@@ -135,6 +137,28 @@ export default class WorldEngine {
       console.warn('Gagal proses background:', e);
       return null;
     }
+  }
+
+  loadTerrainImages() {
+    for (const [name, src] of Object.entries({
+      grass: '/assets/background/grass.webp',
+      path: '/assets/background/path.webp',
+      water: '/assets/background/water.webp',
+    })) {
+      const img = new Image();
+      img.onload = () => { this.terrainImages[name] = img; };
+      img.onerror = () => { console.warn('Gagal load tekstur lingkungan:', name, src); };
+      img.src = src;
+    }
+  }
+
+  drawTerrainTexture(ctx, name, tx, ty, px, py) {
+    const img = this.terrainImages[name];
+    if (!img) return false;
+    const sx = ((tx % 12) + 12) % 12 * this.tileSize;
+    const sy = ((ty % 12) + 12) % 12 * this.tileSize;
+    ctx.drawImage(img, sx, sy, this.tileSize, this.tileSize, px, py, this.tileSize, this.tileSize);
+    return true;
   }
 
   // ---------- Setup peta ----------
@@ -541,28 +565,23 @@ export default class WorldEngine {
         const py = ty * this.tileSize - this.camera.y;
 
         if (tile === 0) {
-          const grad = ctx.createLinearGradient(px, py, px, py + this.tileSize);
-          grad.addColorStop(0, '#4a7a3a');
-          grad.addColorStop(0.5, '#3a6a2a');
-          grad.addColorStop(1, '#2a5a1a');
-          ctx.fillStyle = grad;
-          ctx.fillRect(px, py, this.tileSize, this.tileSize);
-          ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-          ctx.lineWidth = 1;
-          for (let i = 0; i < 5; i++) {
-            const bx = px + 4 + i * 8;
-            const by = py + this.tileSize - 4;
-            ctx.beginPath();
-            ctx.moveTo(bx, by);
-            ctx.lineTo(bx + 2, by - 6 - Math.random() * 4);
-            ctx.stroke();
+          if (!this.drawTerrainTexture(ctx, 'grass', tx, ty, px, py)) {
+            const grad = ctx.createLinearGradient(px, py, px, py + this.tileSize);
+            grad.addColorStop(0, '#4a7a3a');
+            grad.addColorStop(0.5, '#3a6a2a');
+            grad.addColorStop(1, '#2a5a1a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(px, py, this.tileSize, this.tileSize);
           }
           ctx.fillStyle = 'rgba(0,0,0,0.15)';
           ctx.fillRect(px, py + this.tileSize - 4, this.tileSize, 4);
         } else {
           const colors = { 1: '#5d4037', 2: '#1a3a5a', 3: '#8b7355', 4: '#2d4a1a', 5: '#6b6b6b', 6: '#4a3a1a', 7: '#5a3a2a', 8: '#4a4a2a', 9: '#6a4a2a', 10: '#3a3a3a' };
-          ctx.fillStyle = colors[tile] || '#3a5a2a';
-          ctx.fillRect(px, py, this.tileSize, this.tileSize);
+          const texture = tile === 2 ? 'water' : tile === 1 || tile === 3 || tile === 6 ? 'path' : null;
+          if (!texture || !this.drawTerrainTexture(ctx, texture, tx, ty, px, py)) {
+            ctx.fillStyle = colors[tile] || '#3a5a2a';
+            ctx.fillRect(px, py, this.tileSize, this.tileSize);
+          }
           if (tile === 4) {
             ctx.fillStyle = '#1a3a0a';
             ctx.beginPath();

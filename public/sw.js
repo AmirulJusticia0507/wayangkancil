@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wayang-kancil-v9-realistic-puppets';
+const CACHE_NAME = 'wayang-kancil-v10-realistic-environment';
 const APP_SHELL = [
   '/',
   '/index.html',

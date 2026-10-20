@@ -28,6 +28,8 @@ export default class GameEngine {
     // Gambar wayang (PNG) — kancil & buaya (Phase 8.10)
     this.puppetImages = {};
     this.loadPuppetImages();
+    this.backgroundImage = new Image();
+    this.backgroundImage.src = '/assets/background/kelir-forest.webp';
 
     // Loop
     this.lastTime = 0;
@@ -143,13 +145,20 @@ export default class GameEngine {
 
   // ---------- Drawing helpers ----------
   drawParchmentBackground(ctx, w, h, time) {
-    // Latar Kelir / parchment wayang (cokelat keemunan)
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#2d1b10');
-    grad.addColorStop(0.5, '#4a2e18');
-    grad.addColorStop(1, '#2d1b10');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
+    // Lingkungan hutan realistis; gradient lama tetap menjadi fallback saat aset belum siap.
+    if (this.backgroundImage.complete && this.backgroundImage.naturalWidth) {
+      const scale = Math.max(w / this.backgroundImage.naturalWidth, h / this.backgroundImage.naturalHeight);
+      const width = this.backgroundImage.naturalWidth * scale;
+      const height = this.backgroundImage.naturalHeight * scale;
+      ctx.drawImage(this.backgroundImage, (w - width) / 2, (h - height) / 2, width, height);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#2d1b10');
+      grad.addColorStop(0.5, '#4a2e18');
+      grad.addColorStop(1, '#2d1b10');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
 
     // Parallax layers — layar bayangan Kelir yang bergerak bertingkat
     ctx.strokeStyle = 'rgba(255, 213, 79, 0.07)';
